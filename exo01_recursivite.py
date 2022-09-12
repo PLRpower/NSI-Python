@@ -1,3 +1,6 @@
+from turtle import *
+
+
 # Exercice 1
 def fact(n):
     if n == 0:
@@ -39,6 +42,35 @@ def nombre_de_chiffres(n):
         return 1 + nombre_de_chiffres(n // 10)
 
 
-# Exercice 6
-def nombre_de_bits(n):
-    print(n.bit_count())
+# Exercice 7
+def appartient(v, t, i):
+    if i >= len(t):
+        return False
+    elif t[i] == v:
+        return True
+    return appartient(v, t, i + 1)
+
+
+# Exercice 8
+def dichotomie_rec(val, tab, a, b):
+    c = (a + b) // 2
+    if tab[c] == val:
+        return c
+    elif a == b:
+        return -1
+
+
+# Exercice 9
+def koch(n):
+    if n != 0:
+        forward(10)
+        left(60)
+        forward(10)
+        right(120)
+        forward(10)
+        left(60)
+        forward(10)
+        koch(n-1)
+    forward(10)
+
+koch(2)
