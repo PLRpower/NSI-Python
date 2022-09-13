@@ -1,6 +1,3 @@
-from turtle import *
-
-
 # Exercice 1
 def fact(n):
     if n == 0:
@@ -59,15 +56,72 @@ def dichotomie_rec(val, tab, a, b):
         return -1
 
 
+from turtle import *
+
+
 # Exercice 9
-def koch(n):
+def koch(n, l):
     if n == 0:
-        forward(30)
+        forward(l)
         return
-    koch(n - 1)
+    koch(n - 1, l // 3)
     left(60)
-    koch(n - 1)
+    koch(n - 1, l // 3)
     right(120)
-    koch(n - 1)
+    koch(n - 1, l // 3)
     left(60)
-    koch(n - 1)
+    koch(n - 1, l // 3)
+
+
+def propager(m, i, j, val):
+    propager_rec(m, i, j, val)
+    return m
+
+
+# Exercice 10
+def propager_rec(m, i, j, val):
+    if m[i][j] == 1:
+        m[i][j] = val
+
+        if i + 1 < len(m) and m[i + 1][j] == 1:
+            propager(m, i + 1, j, val)
+
+        if not i - 1 < 0 and m[i - 1][j] == 1:
+            propager(m, i - 1, j, val)
+
+        if j + 1 < len(m) and m[i][j + 1] == 1:
+            propager(m, i, j + 1, val)
+
+        if not j - 1 < 0 and m[i][j - 1] == 1:
+            propager(m, i, j - 1, val)
+
+
+M = [[0, 0, 1, 0], [0, 1, 0, 1], [1, 1, 1, 0], [0, 1, 1, 0]]
+
+
+# Exercice 11 (1)
+def echange(lst, i1, i2):
+    v2 = i2
+    lst[i2] = lst[i1]
+    lst[i1] = lst[v2]
+
+
+# Exercice 11 (2)
+"""
+Les valeurs qui peuvent être renvoyés pas l'apel randint(0, 10) sont :
+0 1 9 10
+"""
+
+# Exercice 11 (3)
+"""
+a) La fonction melange() se termine toujours car la variable ind tend vers - l'infini,
+et est vérifiée avec la condition 'if ind > 0'
+
+b) Pour une liste de longueur n, il y a n appels récursifs de la fonction melange
+effectués, sans compter l'appel initial.
+
+c) 
+[0, 1, 2, 3, 4]
+[0, 1, 4, 3, 2]
+"""
+
