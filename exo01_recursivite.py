@@ -38,8 +38,7 @@ def recursive_boucle(i, k):
 def nombre_de_chiffres(n):
     if n < 10:
         return 1
-    else:
-        return 1 + nombre_de_chiffres(n // 10)
+    return 1 + nombre_de_chiffres(n // 10)
 
 
 # Exercice 7
@@ -62,15 +61,13 @@ def dichotomie_rec(val, tab, a, b):
 
 # Exercice 9
 def koch(n):
-    if n != 0:
-        forward(10)
-        left(60)
-        forward(10)
-        right(120)
-        forward(10)
-        left(60)
-        forward(10)
-        koch(n-1)
-    forward(10)
-
-koch(2)
+    if n == 0:
+        forward(30)
+        return
+    koch(n - 1)
+    left(60)
+    koch(n - 1)
+    right(120)
+    koch(n - 1)
+    left(60)
+    koch(n - 1)
