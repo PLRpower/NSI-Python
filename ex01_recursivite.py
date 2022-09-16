@@ -123,5 +123,24 @@ effectués, sans compter l'appel initial.
 c) 
 [0, 1, 2, 3, 4]
 [0, 1, 4, 3, 2]
+[0, 3, 4, 1, 2]
+[0, 3, 4, 1, 2]
+[3, 0, 4, 1, 2]
+
+d)
 """
 
+from random import *
+
+
+def melange(lst, ind):
+    while ind > 0:
+        print(lst)
+        j = randint(0, int)
+        echange(lst, ind, j)
+        ind -= 1
+    print(lst)
+
+
+lst = [v for v in range(5)]
+melange(lst, 4)
