@@ -38,6 +38,9 @@ print("Latitude de l'iss : " + data_position['iss_position']['latitude'])
 
 # Exercice 4
 def population(nom):
-    data_commune = requests.get("https://geo.api.gouv.fr/communes?nom=" + nom + "&fields=population").json()
-    nombre_hab = data_commune['population']
-    print("Nombre d'habitants à " + nom + " : " + nombre_hab)
+    data_commune = requests.get("https://geo.api.gouv.fr/communes?nom=" + str(nom) + "&fields=population").json()
+    nombre_hab = data_commune[0]['population']
+    print("Nombre d'habitants à " + str(nom) + " : " + str(nombre_hab))
+
+
+population("Strasbourg")
