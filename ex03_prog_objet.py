@@ -83,12 +83,37 @@ class Tableau:
 
     def __init__(self, imin, imax, v):
         self._imin = imin
-        self._imax = imax
-        self._tab = [imin, imax]
         self._v = v
 
+        self._tab = []
+        for i in range(imin, imax):
+            self._tab.append(v)
+
+    def indice_valide(self, i):
+        if self._imin <= i <= self._imin + self.__len__():
+            raise IndexError(i)
+
     def __len__(self):
-        return self._imin * self._imax
+        return len(self._tab)
 
     def __getitem__(self, item):
-        return item
+        self.indice_valide(item)
+        return self._tab[item]
+
+    def __setitem__(self, key, value):
+        self.indice_valide(key)
+        self._tab[key] = value
+
+    def __str__(self):
+        string = ""
+        for i in range(self._imin, self._imin + self.__len__()):
+            string += str(self._tab[i]) + " "
+        return string
+
+
+# Exercice 5
+class TaBiDir:
+
+    def __init__(self, g, d):
+        self._d = d
+        self._g = g
