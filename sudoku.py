@@ -48,7 +48,7 @@ if platform.python_version_tuple()[0] == '2':
 else:
     import tkinter as tk
 
-_root = tk.Tk()
+_tk = tk.Tk()
 
 
 class Display:
@@ -56,9 +56,10 @@ class Display:
     def __init__(self):
         self.cases = [[None for _i in range(9)] for _j in range(9)]
         [[self.create_block(i, j) for i in range(3)] for j in range(3)]
+        tk.mainloop()
 
     def create_block(self, i, j):
-        f = tk.Frame(_root, borderwidth=2, relief='sunken')
+        f = tk.Frame(_tk, borderwidth=2, relief='sunken')
         f.grid(row=i, column=j, sticky='nsew')
         for n in range(3):
             for m in range(3):
@@ -106,7 +107,7 @@ class Display:
                 case['numbers'] = None
                 error = case['case'] = tk.Frame(bloc, bg='red', borderwidth=2, relief='sunken')
                 error.grid(row=i, column=j, sticky='nsew')
-                tkinter.messagebox.askretrycancel(title='Défaite', message='Vous avez perdu ! Voulez rejouer ?')
+                tkinter.messagebox.askretrycancel(title='Défaite', message='Vous avez perdu ! Voulez-vous rejouer ?')
         elif isinstance(v, int):
             # remplacer la grille de chiffres possibles par un chiffre définitif
             if type != 'definitif':
@@ -139,14 +140,13 @@ class Display:
                 return
 
         # affecter le chiffre à la case
-        grille[i, j] = v
+        grid[i, j] = v
 
         # mettre à jour la grille
         for i in range(9):
             for j in range(9):
-                self.display_value(i, j, grille[i, j])
+                self.display_value(i, j, grid[i, j])
 
 
-grille = Grid()
+grid = Grid()
 display = Display()
-tk.mainloop()
