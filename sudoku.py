@@ -1,11 +1,14 @@
 # Nom des élèves du groupe : Paul THOMAS
-import tkinter.messagebox
 import platform
+import tkinter.messagebox
 
 
 class Grid:
-    def __init__(self):
-        self.table = [[[_p for _p in range(1, 10)] for _i in range(9)] for _j in range(9)]
+    def __init__(self, grille=None):
+        if grille is None:
+            self.table = [[[_p for _p in range(1, 10)] for _i in range(9)] for _j in range(9)]
+        else:
+            self.table = grille
 
     def __getitem__(self, item):
         i, j = item
@@ -14,14 +17,17 @@ class Grid:
     def __setitem__(self, key, value):
         i, j = key
         self.table[i][j] = value
+
+        for p in range(9):
+            self.erase(i, p, value)
+
+        for q in range(9):
+            self.erase(q, j, value)
+
         rounded_value_i = i - (i % 3)
         rounded_value_j = j - (j % 3)
         [[self.erase(p, q, value) for p in range(rounded_value_i, rounded_value_i + 3)] for q in
          range(rounded_value_j, rounded_value_j + 3)]
-
-        for p in range(9):
-            self.erase(i, p, value)
-            self.erase(p, j, value)
 
     def erase(self, i, j, value):
         if isinstance(self.table[i][j], list):
@@ -29,10 +35,6 @@ class Grid:
                 self.table[i][j].remove(value)
 
 
-# Signaler la fin de la partie (perdue ou gagnée) et empêcher d’agir lorsque
-#  l’on clique sur une case alors que c’est fini
-# Faire apparaître un bouton lorsque la partie se termine qui propose de recommencer,
-#  et recommencer quand on clique dessus (il faudra pour cela définir une fonction init())
 # Permettre de charger une partie à partir d’une liste de valeurs préremplies ;
 #  Autrement dit mettre un argument supplémentaire à la fonction __init__
 #  de Grille et utiliser cela pour initialiser avec une grille de départ
@@ -73,6 +75,7 @@ class Display:
             case.columnconfigure(p, minsize=20)
             case.rowconfigure(p, minsize=20)
         numbers = [None] * 9
+        print(numbers)
         for p in range(3):
             for q in range(3):
                 v = p * 3 + q + 1
@@ -107,7 +110,8 @@ class Display:
                 case['numbers'] = None
                 error = case['case'] = tk.Frame(bloc, bg='red', borderwidth=2, relief='sunken')
                 error.grid(row=i, column=j, sticky='nsew')
-                tkinter.messagebox.askretrycancel(title='Défaite', message='Vous avez perdu ! Voulez-vous rejouer ?')
+                return True
+
         elif isinstance(v, int):
             # remplacer la grille de chiffres possibles par un chiffre définitif
             if type != 'definitif':
@@ -145,8 +149,15 @@ class Display:
         # mettre à jour la grille
         for i in range(9):
             for j in range(9):
-                self.display_value(i, j, grid[i, j])
+                if self.display_value(i, j, grid[i, j]):
+                    answer = tk.messagebox.askretrycancel('Défaite', 'Voulez-vous rejouer ?')
+                    if answer:
+                        grid.__init__()
+                        self.__init__()
+                        break
+                    _tk.destroy()
+                    break
 
 
 grid = Grid()
-display = Display()
+Display()
