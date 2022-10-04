@@ -4,40 +4,54 @@ import tkinter.messagebox
 
 
 class Grid:
-    def __init__(self, grille=None):
-        if grille is None:
-            self.table = [[[_p for _p in range(1, 10)] for _i in range(9)] for _j in range(9)]
+    def __init__(self, grid=None):
+        if grid is None:
+            self.grid = [[[x for x in range(1, 10)] for _ in range(9)] for _ in range(9)]
         else:
-            self.table = grille
+            self.grid = grid
 
     def __getitem__(self, item):
-        i, j = item
-        return self.table[i][j]
+        row, col = item
+        return self.grid[row][col]
 
     def __setitem__(self, key, value):
-        i, j = key
-        self.table[i][j] = value
+        row, col = key
+        self.grid[row][col] = value
 
-        for p in range(9):
-            self.erase(i, p, value)
+        for x in range(9):
+            self.erase(row, x, value)
 
-        for q in range(9):
-            self.erase(q, j, value)
+        for x in range(9):
+            self.erase(x, col, value)
 
-        rounded_value_i = i - (i % 3)
-        rounded_value_j = j - (j % 3)
-        [[self.erase(p, q, value) for p in range(rounded_value_i, rounded_value_i + 3)] for q in
-         range(rounded_value_j, rounded_value_j + 3)]
+        rounded_row = row - row % 3
+        rounded_col = col - col % 3
+        [[self.erase(i, j, value) for i in range(rounded_row, rounded_row + 3)] for j in
+         range(rounded_col, rounded_col + 3)]
 
-    def erase(self, i, j, value):
-        if isinstance(self.table[i][j], list):
-            if value in self.table[i][j]:
-                self.table[i][j].remove(value)
+    def erase(self, row, col, value):
+        if isinstance(self.grid[row][col], list):
+            if value in self.grid[row][col]:
+                self.grid[row][col].remove(value)
+
+    def solve(self, row, col, value):
+        for x in range(9):
+            if self.grid[row][x] == value:
+                return False
+
+        for x in range(9):
+            if grid[x][col] == value:
+                return False
+
+        rounded_row = row - row % 3
+        rounded_col = col - col % 3
+        for i in range(3):
+            for j in range(3):
+                if grid[i + rounded_row][j + rounded_col] == value:
+                    return False
+        return True
 
 
-# Permettre de charger une partie à partir d’une liste de valeurs préremplies ;
-#  Autrement dit mettre un argument supplémentaire à la fonction __init__
-#  de Grille et utiliser cela pour initialiser avec une grille de départ
 # Résolution automatique (quand c’est possible) en cliquant sur un bouton
 # Permettre de revenir en arrière (nécessite de garder un historique de ce qui a été fait)
 # Permettre de jouer sans « tricher », simplement en entrant la valeur au clavier
@@ -56,33 +70,33 @@ _tk = tk.Tk()
 class Display:
 
     def __init__(self):
-        self.cases = [[None for _i in range(9)] for _j in range(9)]
-        [[self.create_block(i, j) for i in range(3)] for j in range(3)]
+        self.cases = [[None for _ in range(9)] for _ in range(9)]
+        [[self.create_block(row, col) for row in range(3)] for col in range(3)]
+        self.update_grid()
         tk.mainloop()
 
-    def create_block(self, i, j):
-        f = tk.Frame(_tk, borderwidth=2, relief='sunken')
-        f.grid(row=i, column=j, sticky='nsew')
-        for n in range(3):
-            for m in range(3):
-                self.cases[i * 3 + n][j * 3 + m] = self.create_box(f, i * 3 + n, j * 3 + m)
-        return f
+    def create_block(self, row, col):
+        frame = tk.Frame(_tk, borderwidth=2, relief='sunken')
+        frame.grid(row=row, column=col, sticky='nsew')
+        for i in range(3):
+            for j in range(3):
+                self.cases[row * 3 + i][col * 3 + j] = self.create_box(frame, row * 3 + i, col * 3 + j)
+        return frame
 
-    def create_box(self, bloc, n, m):
+    def create_box(self, bloc, row, col):
         case = tk.Frame(bloc, borderwidth=2, relief='groove')
-        case.grid(row=n, column=m, sticky='nsew')
-        for p in range(3):
-            case.columnconfigure(p, minsize=20)
-            case.rowconfigure(p, minsize=20)
+        case.grid(row=row, column=col, sticky='nsew')
+        for x in range(3):
+            case.columnconfigure(x, minsize=20)
+            case.rowconfigure(x, minsize=20)
         numbers = [None] * 9
-        print(numbers)
-        for p in range(3):
-            for q in range(3):
-                v = p * 3 + q + 1
-                ch = numbers[v - 1] = tk.Label(case, text=str(v), fg='grey')
-                ch.grid(row=p, column=q, sticky='nsew')
+        for i in range(3):
+            for j in range(3):
+                value = i * 3 + j + 1
+                ch = numbers[value - 1] = tk.Label(case, text=str(value), fg='grey')
+                ch.grid(row=i, column=j, sticky='nsew')
                 # appeler self.click lorsque l'on clique sur une sous-case
-                ch.bind("<Button-1>", lambda ev, v=v: self.click_on_number(n, m, v))
+                ch.bind("<Button-1>", lambda ev, v=value: self.click_on_number(row, col, v))
         # une case est représentée par un dictionnaire avec :
         #   - son état : 'chiffres', 'definitif', 'erreur' (s'il n'y a plus de chiffres possibles)
         #   - le bloc auquel elle appartient
@@ -95,13 +109,13 @@ class Display:
             'numbers': numbers
         }
 
-    def display_value(self, i, j, v):
-        case = self.cases[i][j]
+    def display_value(self, row, col, value):
+        case = self.cases[row][col]
         type = case['type']
         bloc = case['bloc']
         numbers = case['numbers']
 
-        if v is None or v == []:
+        if value is None or value == []:
             # pas de valeur : erreur dans la grille
             # détruire les sous-cases et afficher la case en rouge
             if type != 'error':
@@ -109,28 +123,28 @@ class Display:
                 case['case'].destroy
                 case['numbers'] = None
                 error = case['case'] = tk.Frame(bloc, bg='red', borderwidth=2, relief='sunken')
-                error.grid(row=i, column=j, sticky='nsew')
+                error.grid(row=row, column=col, sticky='nsew')
                 return True
 
-        elif isinstance(v, int):
+        elif isinstance(value, int):
             # remplacer la grille de chiffres possibles par un chiffre définitif
             if type != 'definitif':
                 case['type'] = 'definitif'
                 case['case'].destroy
                 case['numbers'] = None
-                number = case['case'] = tk.Label(bloc, text=v, font=(None, 30), borderwidth=2, relief='sunken')
-                number.grid(row=i, column=j, sticky='nsew')
+                number = case['case'] = tk.Label(bloc, text=value, font=(None, 30), borderwidth=2, relief='sunken')
+                number.grid(row=row, column=col, sticky='nsew')
         else:
             # mettre à jour les chiffres possibles
             # on "efface" les chiffres non possibles en les affichant en blanc
             for ch in range(9):
-                if ch + 1 in v:
+                if ch + 1 in value:
                     numbers[ch].config(fg='grey')
                 else:
                     numbers[ch].config(fg='white')
 
-    def click_on_number(self, i, j, v):
-        case = self.cases[i][j]
+    def click_on_number(self, row, col, value):
+        case = self.cases[row][col]
         numbers = case['numbers']
 
         # ne rien faire s'il y a déjà un chiffre définitif
@@ -139,14 +153,17 @@ class Display:
 
         # ne rien faire si on a cliqué sur un chiffre blanc, donc non autorisé
         if numbers:
-            color = numbers[v - 1].cget('fg')
+            color = numbers[value - 1].cget('fg')
             if color == 'white':
                 return
 
         # affecter le chiffre à la case
-        grid[i, j] = v
+        grid[row, col] = value
 
         # mettre à jour la grille
+        self.update_grid()
+
+    def update_grid(self):
         for i in range(9):
             for j in range(9):
                 if self.display_value(i, j, grid[i, j]):
@@ -160,4 +177,5 @@ class Display:
 
 
 grid = Grid()
-Display()
+display = Display()
+display.update_grid()
