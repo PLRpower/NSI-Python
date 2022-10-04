@@ -34,25 +34,9 @@ class Grid:
             if value in self.grid[row][col]:
                 self.grid[row][col].remove(value)
 
-    def solve(self, row, col, value):
-        for x in range(9):
-            if self.grid[row][x] == value:
-                return False
-
-        for x in range(9):
-            if grid[x][col] == value:
-                return False
-
-        rounded_row = row - row % 3
-        rounded_col = col - col % 3
-        for i in range(3):
-            for j in range(3):
-                if grid[i + rounded_row][j + rounded_col] == value:
-                    return False
-        return True
-
 
 # Résolution automatique (quand c’est possible) en cliquant sur un bouton
+
 # Permettre de revenir en arrière (nécessite de garder un historique de ce qui a été fait)
 # Permettre de jouer sans « tricher », simplement en entrant la valeur au clavier
 #  sur une case donnée (choix du mode à choisir en début de partie)
@@ -73,7 +57,9 @@ class Display:
         self.cases = [[None for _ in range(9)] for _ in range(9)]
         [[self.create_block(row, col) for row in range(3)] for col in range(3)]
         self.update_grid()
-        tk.mainloop()
+        tk.Button(text='résoudre automatiqument', bg='#50C878', activebackground='#00A36C',
+                  command=lambda: solve_sudoku()).grid()
+        _tk.title('Sudoku')
 
     def create_block(self, row, col):
         frame = tk.Frame(_tk, borderwidth=2, relief='sunken')
@@ -122,7 +108,7 @@ class Display:
                 case['type'] = 'error'
                 case['case'].destroy
                 case['numbers'] = None
-                error = case['case'] = tk.Frame(bloc, bg='red', borderwidth=2, relief='sunken')
+                error = case['case'] = tk.Frame(bloc, bg='red', borderwidth=2, relief='groove')
                 error.grid(row=row, column=col, sticky='nsew')
                 return True
 
@@ -132,7 +118,7 @@ class Display:
                 case['type'] = 'definitif'
                 case['case'].destroy
                 case['numbers'] = None
-                number = case['case'] = tk.Label(bloc, text=value, font=(None, 30), borderwidth=2, relief='sunken')
+                number = case['case'] = tk.Label(bloc, text=value, borderwidth=2, relief='groove', font=(None, 30))
                 number.grid(row=row, column=col, sticky='nsew')
         else:
             # mettre à jour les chiffres possibles
@@ -158,7 +144,7 @@ class Display:
                 return
 
         # affecter le chiffre à la case
-        grid[row, col] = value
+        grille[row, col] = value
 
         # mettre à jour la grille
         self.update_grid()
@@ -166,16 +152,60 @@ class Display:
     def update_grid(self):
         for i in range(9):
             for j in range(9):
-                if self.display_value(i, j, grid[i, j]):
+                if self.display_value(i, j, grille[i, j]):
                     answer = tk.messagebox.askretrycancel('Défaite', 'Voulez-vous rejouer ?')
                     if answer:
-                        grid.__init__()
+                        grille.__init__()
                         self.__init__()
                         break
                     _tk.destroy()
                     break
 
 
-grid = Grid()
+def solve_sudoku():
+    for row in range(9):
+        for col in range(9):
+            for value in range(1, 10):
+                if solve_box(row, col, value):
+                    if isinstance(grille.grid[row][col], list):
+                        for x in range(9):
+                            if isinstance(grille.grid[row][x], list):
+                                if len(grille.grid[row][x]) == 1:
+                                    return
+
+                        for x in range(9):
+                            if isinstance(grille.grid[x][col], list):
+                                if len(grille.grid[x][col]) == 1:
+                                    return
+
+                        rounded_row = row - row % 3
+                        rounded_col = col - col % 3
+                        for i in range(3):
+                            for j in range(3):
+                                if isinstance(grille.grid[i + rounded_row][j + rounded_col], list):
+                                    if len(list(grille.grid[i + rounded_row][j + rounded_col])) == 1:
+                                        return
+                        display.click_on_number(row, col, value)
+
+
+def solve_box(row, col, value):
+    for x in range(9):
+        if grille.grid[row][x] == value:
+            return False
+
+    for x in range(9):
+        if grille.grid[x][col] == value:
+            return False
+
+    rounded_row = row - row % 3
+    rounded_col = col - col % 3
+    for i in range(3):
+        for j in range(3):
+            if grille.grid[i + rounded_row][j + rounded_col] == value:
+                return False
+    return True
+
+
+grille = Grid()
 display = Display()
-display.update_grid()
+tk.mainloop()
