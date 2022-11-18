@@ -1,43 +1,84 @@
 class Cellule:
+    """Une cellule d’une liste chaînée"""
 
     def __init__(self, v, s):
         self.valeur = v
         self.suivante = s
 
 
-# Exercice 5
+class Pile:
+    """Structure de pile"""
 
-def occurences(x, lst):
-    if lst is None:
-        return 0
-    elif lst.valeur == x:
-        return 1 + occurences(x, lst.suivante)
-    else:
-        return occurences(x, lst.suivante)
+    def __init__(self):
+        self.contenu = None
+        self._taille = 0
 
+    def est_vide(self):
+        return self.contenu is None
 
-def occurences_while(x, lst):
-    count = 0
-    while lst:
-        if lst[0] == x:
-            count += 1
-        lst.pop(0)
-    return count
+    def empiler(self, e):
+        self.contenu = Cellule(e, self.contenu)
+        self._taille += 1
 
-
-# Exercice 6
-def trouver(x, lst):
-    if lst is None:
-        return None
-    elif lst.valeur == x:
-        return 0
-    else:
-        etc = trouver(x, lst.suivant)
-        if etc is None:
-            return None
+    def depiler(self):
+        if self.est_vide():
+            raise IndexError('dépiler sur une pile vide')
         else:
-            return etc + 1
+            self._taille -= 1
+            v = self.contenu.valeur
+            self.contenu = self.contenu.suivante
+            return v
+
+    def consulter(self):
+        if self.est_vide():
+            raise IndexError('consulter sur une pile vide')
+        else:
+            return self.contenu.valeur
+
+    def vider(self):
+        self.contenu = None
+
+    def taille(self):
+        return self._taille
 
 
-def trouve_while(x, lst):
-####
+# Exercice 2
+def calcP(expr):
+    pile = Pile()
+    for element in expr.split(" "):
+
+        if element == "+":  # Si l'élément est un '+'
+            premier = pile.depiler()
+            deuxieme = pile.depiler()
+            pile.empiler(premier + deuxieme)
+
+        elif element == "*":  # Si l'élément est un '*'
+            premier = pile.depiler()
+            deuxieme = pile.depiler()
+            pile.empiler(premier * deuxieme)
+
+        else:
+            try:  # Si l'élément est un nombre
+                pile.empiler(float(element))
+            except SyntaxError:  # Si l'élément n'est ni un nombre, ni un opérateur binaire
+                raise SyntaxError("Expression mal formée")
+
+    return pile.consulter()
+
+
+assert (calcP("1 2 3 * + 4 *") == 28.0)
+
+
+# Exercice 3
+def parenthese(s, f):
+    pile = Pile()
+    for i, x in enumerate(s):
+        if i == f:
+            return pile.depiler()
+        elif x == "(":
+            pile.empiler(i)
+        elif x == ")":
+            pile.depiler()
+
+
+print(parenthese(""))
