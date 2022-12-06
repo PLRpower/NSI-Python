@@ -261,7 +261,6 @@ class File:
         maillon = self.dernier_file
         while maillon is not None:
             print(maillon.valeur)
-            maillon =
 
     def defile(self):
         if not self.est_vide():
@@ -269,10 +268,7 @@ class File:
                 resultat = self.dernier_file.valeur
                 self.dernier_file = None
                 return resultat
-            maillon =
             while maillon.suivant.suivant is not None:
                 maillon = maillon.suivant
-            resultat =
             maillon.suivant = None
-            return resultat
         return None
