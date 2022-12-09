@@ -1,13 +1,7 @@
 from PIL import Image
 
-im = Image.open("data/in/arrow.png")
 
-largeur, hauteur = im.size
-
-px = im.load()
-
-
-def echage_circulaire(px, x, y, t):
+def echange_circulaire(px, x, y, t):
     n = t // 2
     for i in range(x, x + n):
         for j in range(y, y + n):
@@ -19,13 +13,38 @@ def echage_circulaire(px, x, y, t):
 
 
 def rotation_rec(px, x, y, t):
-    if largeur < 2 or hauteur < 2:
+    if t <= 1:
         return
 
-    echage_circulaire(px, x, y, t)
+    echange_circulaire(px, x, y, t)
 
     n = t // 2
-    rotation_rec()
-    rotation_rec()
-    rotation_rec()
-    rotation_rec()
+    rotation_rec(px, x, y, n)
+    rotation_rec(px, x + n, y, n)
+    rotation_rec(px, x, y + n, n)
+    rotation_rec(px, x + n, y + n, n)
+
+
+def rotation(px):
+    rotation_rec(px, 0, 0, largeur)
+    save("arrow_rotation.png")
+
+
+def save(name):
+    img.save("data/out/" + name)
+
+
+img = Image.open("data/in/arrow.png")
+largeur, hauteur = img.size
+px = img.load()
+rotation(px)
+
+
+def fusion(l1, l2):
+    l = []
+    i, j = 0, 0
+
+    while i < len(l1) and j < len(l2):
+        if l1[i] < l2[j]:
+            l.append()
+            i =
