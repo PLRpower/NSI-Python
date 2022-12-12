@@ -46,5 +46,65 @@ def fusion(l1, l2):
 
     while i < len(l1) and j < len(l2):
         if l1[i] < l2[j]:
-            l.append()
-            i =
+            l.append(l1[i])
+            i += 1
+        else:
+            l.append(l2[j])
+            j += 1
+
+    while i < len(l1):
+        l.append(l1[i])
+        i += 1
+
+    while j < len(l2):
+        l.append(l2[j])
+        j += 1
+
+    return l
+
+
+def tri_fusion(l):
+    if len(l) <= 1:
+        return l
+    else:
+        milieu = len(l) // 2
+        l1 = l[:milieu]
+        l2 = l[milieu:]
+        return fusion(tri_fusion(l1), tri_fusion(l2))
+
+
+def somme_max_rec(tab, g, d):
+    if g == d:
+        return 'test'
+
+    m = (g + d) // 2
+
+    max_gauche = tab[m]
+    somme = max_gauche
+    for i in range(m - 1, g - 1, -1):
+        somme += i
+        if somme > max_gauche:
+            max_gauche = somme
+
+    max_droite = float('-inf')
+    somme = 0
+    for i in range(m + 1, d + 1):
+        somme += i
+        if somme > max_droite:
+            max_droite = somme
+
+    max_milieu = max(max_gauche, m, max_droite)
+
+    max_gauche = somme_max_rec(tab, max_gauche, max_milieu)
+    max_droite = somme_max_rec(tab, max_milieu, max_droite)
+
+    return max(max_gauche, max_droite, max_milieu)
+
+
+def somme_max(tab):
+    g = 0
+    d = len(tab)
+    return somme_max_rec(tab, g, d)
+
+
+somme_max([2, -4, 1, 9, -6, 7, -3])
