@@ -1,32 +1,32 @@
 from PIL import Image
 
 
-def echange_circulaire(px, x, y, t):
+def echange_circulaire(pix, x, y, t):
     n = t // 2
     for i in range(x, x + n):
         for j in range(y, y + n):
-            tmp = px[i, j]
-            px[i, j] = px[i, j + n]
-            px[i, j + n] = px[i + n, j + n]
-            px[i + n, j + n] = px[i + n, j]
-            px[i + n, j] = tmp
+            tmp = pix[i, j]
+            pix[i, j] = pix[i, j + n]
+            pix[i, j + n] = pix[i + n, j + n]
+            pix[i + n, j + n] = pix[i + n, j]
+            pix[i + n, j] = tmp
 
 
-def rotation_rec(px, x, y, t):
+def rotation_rec(pix, x, y, t):
     if t <= 1:
         return
 
-    echange_circulaire(px, x, y, t)
+    echange_circulaire(pix, x, y, t)
 
     n = t // 2
-    rotation_rec(px, x, y, n)
-    rotation_rec(px, x + n, y, n)
-    rotation_rec(px, x, y + n, n)
-    rotation_rec(px, x + n, y + n, n)
+    rotation_rec(pix, x, y, n)
+    rotation_rec(pix, x + n, y, n)
+    rotation_rec(pix, x, y + n, n)
+    rotation_rec(pix, x + n, y + n, n)
 
 
-def rotation(px):
-    rotation_rec(px, 0, 0, largeur)
+def rotation(pix):
+    rotation_rec(pix, 0, 0, largeur)
     save("arrow_rotation.png")
 
 
@@ -37,7 +37,9 @@ def save(name):
 img = Image.open("data/in/arrow.png")
 largeur, hauteur = img.size
 px = img.load()
-rotation(px)
+
+
+# rotation(px)
 
 
 def fusion(l1, l2):
@@ -74,8 +76,8 @@ def tri_fusion(l):
 
 
 def somme_max_rec(tab, g, d):
-    if g == d:
-        return 'test'
+    if g > d:
+        return tab[d]
 
     m = (g + d) // 2
 
@@ -107,4 +109,80 @@ def somme_max(tab):
     return somme_max_rec(tab, g, d)
 
 
-somme_max([2, -4, 1, 9, -6, 7, -3])
+def fusion_2(L1, L2):
+    n1 = len(L1)
+    n2 = len(L2)
+    L12 = [0] * (n1 + n2)
+    i1 = 0
+    i2 = 0
+    i = 0
+    while i1 < n1 and i2 < n2:
+        if L1[i1] < L2[i2]:
+            L12[i] = L1[i1]
+            i1 += 1
+        else:
+            L12[i] = L2[i2]
+            i2 += 1
+        i += 1
+    while i1 < n1:
+        L12[i] = L1[i1]
+        i1 += 1
+        i += 1
+    while i2 < n2:
+        L12[i] = L2[i2]
+        i2 += 1
+        i += 1
+    return L12
+
+
+def chercher(T, n, i, j):
+    if i < 0 or j > len(T) - 1:
+        print("Erreur")
+        return None
+    if i > j:
+        return None
+    m = (i + j) // 2
+    if T[m] < n:
+        return chercher(T, n, m, j)
+    elif T[m] > n:
+        return chercher(T, n, i, m)
+    else:
+        return m
+
+
+assert (chercher([1, 5, 6, 6, 9, 12], 9, 0, 5) == 4)
+
+
+class Cellule:
+    def __init__(self, murNord, murEst, murSud, murOuest):
+        self.murs = {'N': murNord, 'E': murEst, 'S': murSud, 'O': murOuest}
+
+
+cellule = Cellule(True, False, True, True)
+
+
+class Labyrinthe:
+    def __init__(self, hauteur, longueur):
+        self.grille = self.construire_grille(hauteur, longueur)
+
+    def construire_grille(self, hauteur, longueur):
+        grille = []
+        for i in range(hauteur):
+            ligne = []
+            for j in range(longueur):
+                cellule = Cellule(True, True, True, True)
+                ligne.append(cellule)
+            grille.append(ligne)
+        return grille
+
+    def creer_passage(self, c1_lig, c1_col, c2_lig, c2_col):
+        cellule1 = self.grille[c1_lig][c1_col]
+        cellule2 = self.grille[c2_lig][c2_col]
+        # cellule 2 au Nord de cellule1
+        if c1_lig - c2_lig == 1 and c1_col == c2_col:
+            cellule1.murs['N'] = False
+            cellule2.murs['S'] = False
+        # cellule2 à l’Ouest de cellule1
+        elif c1_lig == c2_lig and c1_col - c2_col == 1:
+            cellule1.murs['O'] = False
+            cellule2.murs['E'] = False
