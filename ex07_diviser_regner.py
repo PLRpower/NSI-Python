@@ -186,3 +186,59 @@ class Labyrinthe:
         elif c1_lig == c2_lig and c1_col - c2_col == 1:
             cellule1.murs['O'] = False
             cellule2.murs['E'] = False
+
+    def creer_labyrinthe(self, ligne, colonne, haut, long):
+        if haut == 1:  # Cas de base
+            for k in range(long):
+                self.creer_passage(ligne, k, ligne, k + 1)
+        elif long == 1:  # Cas de base
+            for k in range(haut):
+                self.creer_passage(k, colonne, k + 1, colonne)
+        # Suite ...
+
+
+def tri_fusion2(L):
+    n = len(L)
+    if n <= 1:
+        return L
+    print(L)
+    mg = moitie_gauche(L)
+    md = moitie_droite(L)
+    L1 = tri_fusion2(mg)
+    L2 = tri_fusion2(md)
+    return fusion2(L1, L2)
+
+
+def moitie_droite(L):
+    milieu = len(L) // 2
+    return L[:milieu]
+
+
+def moitie_gauche(L):
+    milieu = len(L) // 2
+    return L[milieu:]
+
+
+def fusion2(L1, L2):
+    L = []
+    n1 = len(L1)
+    n2 = len(L2)
+    i1 = 0
+    i2 = 0
+    while i1 < n1 or i2 < n2:
+        e1 = L1[i1]
+        e2 = L2[i2]
+        if i1 >= n1:
+            L.append(e2)
+            i2 += 1
+        elif i2 >= n2:
+            L.append(e1)
+            i1 += 1
+        else:
+            if e1 > e2:
+                L.append(e2)
+                i1 += 1
+            else:
+                L.append(e1)
+                i2 += 1
+    return L
