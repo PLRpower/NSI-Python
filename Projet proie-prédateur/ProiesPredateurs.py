@@ -14,6 +14,7 @@ class Params:
     border = 1
     largeur_pixels = 900
     hauteur_pixels = 600
+
     def __init__(self):
         # Paramètres modifiables à la volée :
         self.dt = 100
@@ -102,14 +103,17 @@ class Animal:
         """Indique si l’animal meurt"""
         return self.age >= self.age_max or self.metabo <= 0
 
+
 class Loup(Animal):
     def __init__(self):
         Animal.__init__(self, metabo=100, meta_max=200, conso=2, age_max=50, age_repro=10, meta_repro=120,
                         classe="loup", valeur_repas=10)
 
+
 class Lapin(Animal):
     def __init__(self):
-        Animal.__init__(self, metabo=20, meta_max=45, conso=3, age_max=25, age_repro=10, meta_repro=40, classe="lapin")
+        Animal.__init__(self, metabo=20, meta_max=45, conso=3, age_max=25, age_repro=10, meta_repro=40, classe="lapin",
+                        valeur_repas=5)
 
 
 def cases_voisines(x, y):
@@ -137,36 +141,49 @@ def vieillir_animaux():
     """Fait vieillir chaque animal selon les règles.
     Si, ce faisant, un animal meurt, on l’élimine du terrain"""
     for (x, y), (animal, _) in list(carte.animal.items()):
-        animal.vieillir()
-        if animal.meurt():
-            carte.elimine_animal(x, y)
+        animal.vieillir()  # Faire vieillir l'animal
+        if animal.meurt():  # Vérifier si l'animal meurt
+            carte.elimine_animal(x, y)  # Le supprimer de la carte
 
 
 def nourrir_animaux():
     """Nourrit chaque animal selon les règles"""
     for (x, y), (animal, _) in carte.animal.items():
-        if animal.classe == "lapin":
-            carte.coupe_herbe(x, y)
-            animal.nourrir()
-
+        if animal.classe == "lapin":  # Si l'animal est un lapin
+            carte.coupe_herbe(x, y)  # Couper l'herbe
+            animal.nourrir()  # Nourrir le lapin
 
 def reproduire_animaux():
     """Fait se reproduire les animaux selon les règles"""
-    for (x0, y0), (animal, _) in carte.animal.items():
-        if animal.se_reproduit():
-            for (x, y) in cases_voisines(x0, y0):  # Vérifier toutes les cases autour
-                if (x, y) in carte.animal.keys():  # Si il y a un lapin
-                    carte.place_animal(Lapin(), x, y)
+    for (x0, y0), (animal, _) in list(carte.animal.items()):
+        if animal.se_reproduit():  # Si l'animal est capable de se reproduire
+            while True:  # Tant que la case générée aléatoirement est occupée, en générer une autre
+                x, y = choice(cases_voisines(x0, y0))  # Case aléatoire autour de l'animal
+                if (x, y) not in carte.animal.keys():  # Si il n'y a pas d'autre animal dans cette case
+                    if animal.classe == "lapin":
+                        carte.place_animal(Lapin(), x, y)  # Placer un lapin
+                    else:
+                        carte.place_animal(Loup(), x, y)  # Placer un loup
+                    break
 
 
 def deplacer_animaux():
     """Fait se déplacer les animaux selon les règles"""
     for (x0, y0) in list(carte.animal.keys()):
-        while True:
-            x, y = choice(cases_voisines(x0, y0))  # Case aléatoire autour de l'animal
-            if (x, y) not in carte.animal.keys():  # Si il n'y a pas d'autre animal dans cette case
-                carte.bouge_animal(x0, y0, x, y)  # Déplacer l'animal
-                break
+        herbe = {}
+        for x, y in cases_voisines(x0, y0):  # Parcourir les cases voisines
+            herbe[(x, y)] = carte.herbe[x][y][0]  # Sauvegarder la taille de l'herbe de la case*
+        herbe_trie = sorted(herbe.items(), key=lambda x: x[1], reverse=True)[0][
+            1]  # Trier la taille de l'herbe (décroissant)
+        maximum_herbe = [case for case in herbe_trie if case[1] == herbe_trie]  # Trouver les valeurs maximum de l'herbe
+        case_aleatoire = choice(maximum_herbe)[0]  # Faire un choix aléatoire parmi le maximum d'herbe
+        x, y = case_aleatoire
+        if (x, y) not in carte.animal.keys():  # Si il n'y a pas d'autre animal dans cette case
+            carte.bouge_animal(x0, y0, x, y)  # Bouger l'animal dans la case choisie
+        else:
+            herbe_trie.pop(case_aleatoire)
+            continue
+
 
 def cycle():
     """Exécute un cycle et le redémarre si on est en mode auto"""
@@ -186,6 +203,7 @@ def cycle():
         continuer = carte.after(carte.params.dt, cycle)
         # Relancera la fonction cycle après carte.params.dt ms
 
+
 def demarrer():
     """Démarre l’exécution répétée des cycles"""
     carte.params.auto = True
@@ -195,10 +213,12 @@ def demarrer():
     bouton_param.configure(state='disabled')
     cycle()
 
+
 def pas():
     """Fait exécuter un seul cycle"""
     carte.params.auto = False
     cycle()
+
 
 def stop():
     """Stoppe l’exécution des cycles"""
@@ -207,6 +227,7 @@ def stop():
     bouton_pas.configure(state='normal')
     bouton_reset.configure(state='normal')
     bouton_param.configure(state='normal')
+
 
 class Graph():
     def __init__(self):
@@ -270,17 +291,20 @@ def hide_graph():
     bouton_graph.configure(text="Courbe", command=show_graph)
     graph.withdraw()
 
+
 def show_param():
     """Affiche la fenêtre des paramètres"""
     for child in zone_boutons.winfo_children():
         child.configure(state='disabled')
     carte.params.fen_para.deiconify()
 
+
 def hide_param():
     """Cache la fenêtre des paramètres"""
     carte.params.fen_para.withdraw()
     for child in zone_boutons.winfo_children():
         child.configure(state='normal')
+
 
 def exemples():
     """Exemples d’utilisations d’éléments du programme"""
@@ -340,13 +364,24 @@ def init():
     carte.reinit()
     graph.reinit()
 
-    exemples()  # ligne à supprimer
+    generation()
 
+    # exemples()
     pass
+
+
+def generation():
+    """Réinitialise le terrain et le graphique.
+    Place des lapins et loups en fonction des paramètres"""
+    carte.place_animal(Lapin(), 12, 0)  # Crée et place quelques animaux
+    carte.place_animal(Lapin(), 2, 7)
+    carte.place_animal(Loup(), 24, 7)
+
 
 def _quit():
     fenetre.quit()  # arrête le mainloop
     fenetre.destroy()
+
 
 if __name__ == '__main__':
     fenetre = Tk()
