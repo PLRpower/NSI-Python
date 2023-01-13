@@ -1,5 +1,5 @@
 class Noeud:
-    '''un nœud d’un arbre binaire'''
+    """Un nœud d’un arbre binaire"""
 
     def __init__(self, v, g, d):
         self.valeur = v
@@ -9,17 +9,10 @@ class Noeud:
     def __eq__(self, autre_arb):  # Le temps d'exécution de l'algorithme est proportionnel à la taille de la donnée
         if autre_arb is None:
             return False
-        elif self.valeur != autre_arb.valeur:
-            return False
-        elif (self.gauche is None) != (autre_arb.gauche is None):
-            return False
-        elif self.gauche and autre_arb.gauche and self.gauche != autre_arb.gauche:
-            return False
-        elif (self.droit is None) != (autre_arb.droit is None):
-            return False
-        elif self.droit and autre_arb.droit and self.droit != autre_arb.droit:
-            return False
-        return True
+        else:
+            return self.valeur == autre_arb \
+                   and appartient(self.gauche, autre_arb) \
+                   and appartient(self.droit, autre_arb)
 
 
 def est_feuille(arb):
@@ -54,7 +47,10 @@ def appartient(arb, v):
         return False
     elif arb.valeur == v:
         return True
-    return appartient(arb.gauche, v) or appartient(arb.droit, v)
+    elif v < arb.valeur:
+        return appartient(arb.gauche, v)
+    else:
+        return appartient(arb.droit, v)
 
 
 def affiche(arb):
@@ -75,6 +71,82 @@ def parfait(h):
         return Noeud(0, arb_gauche, arb_droit)
 
 
-arb = Noeud('A', Noeud('B', None, Noeud('C', None, None)), Noeud('D', None, None))
+# Les arbres binaires de recherches sont les arbres n°1 et n°2.
 
-affiche(arb)
+def minimum(arb):  # L'élément le plus petit se trouve toujours complètement à droite
+    if arb is not None:
+        while arb.gauche is not None:
+            arb = arb.gauche
+        return arb.valeur
+    return None
+
+
+def maximum(arb):  # L'élément le plus grand se trouve toujours complètement à gauche
+    if arb is not None:
+        while arb.droit is not None:
+            arb = arb.droit
+        return arb.valeur
+    return None
+
+
+def ajout(arb, v):
+    if arb is None:
+        return Noeud(v, None, None)
+    elif not appartient(arb, v):
+        if v < arb.valeur:
+            return Noeud(arb.valeur, ajout(arb.gauche, v), arb.droit)
+        else:
+            return Noeud(arb.valeur, arb.gauche, ajout(arb.droit, v))
+
+
+def est_ABR(arb):
+    if arb is None:
+        return True
+    if arb.gauche is not None and arb.gauche.valeur > arb.valeur:
+        return False
+    if arb.droit is not None and arb.droit.valeur < arb.valeur:
+        return False
+    return est_ABR(arb.gauche) and est_ABR(arb.droit)
+
+
+def remplir(arb, tbl):
+    if arb is not None:
+        remplir(arb.gauche, tbl)
+        tbl.append(arb.valeur)
+        remplir(arb.droit, tbl)
+
+
+class ABR:
+    """un arbre binaire de recherche"""
+
+    def __init__(self):
+        self.racine = None
+
+    def ajouter(self, v):
+        self.racine = ajout(self.racine, v)
+
+    def contient(self, v):
+        return appartient(self.racine, v)
+
+    def lister(self):
+        return remplir(self.racine, [])
+
+
+def trier(tbl):
+    return sorted(tbl)
+
+
+def taille(arb, lettre):
+    if arb[lettre][0] == '' and arb[lettre][1] == '':
+        return 1
+    elif arb[lettre][0] == '':
+        return 1 + taille(arb, arb[lettre][1])
+    elif arb[lettre][1] == '':
+        return 1 + taille(arb, arb[lettre][0])
+    else:
+        return 1 + taille(arb, arb[lettre][0]) + taille(arb, arb[lettre][1])
+
+
+a = {'F': ['B', 'G'], 'B': ['A', 'D'], 'A': ['', ''], 'D': ['C', 'E'],
+     'C': ['', ''], 'E': ['', ''], 'G': ['', 'I'], 'I': ['', 'H'], 'H': ['', '']}
+print(taille(a, 'F'))
