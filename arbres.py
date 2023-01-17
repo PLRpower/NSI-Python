@@ -9,10 +9,9 @@ class Noeud:
     def __eq__(self, autre_arb):  # Le temps d'exécution de l'algorithme est proportionnel à la taille de la donnée
         if autre_arb is None:
             return False
-        else:
-            return self.valeur == autre_arb \
-                   and appartient(self.gauche, autre_arb) \
-                   and appartient(self.droit, autre_arb)
+        return self.valeur == autre_arb \
+               and appartient(self.gauche, autre_arb) \
+               and appartient(self.droit, autre_arb)
 
 
 def est_feuille(arb):
@@ -21,10 +20,10 @@ def est_feuille(arb):
 
 def nb_feuilles(arb):
     if arb is None:
-        return 0
-    elif est_feuille(arb):
-        return 1
-    return nb_feuilles(arb.gauche) + nb_feuilles(arb.droit)
+        if est_feuille(arb):
+            return 1
+        return nb_feuilles(arb.gauche) + nb_feuilles(arb.droit)
+    return 0
 
 
 def nb_noeud_int(arb):
@@ -43,14 +42,13 @@ def parcours_feuilles(arb):
 
 
 def appartient(arb, v):
-    if arb is None:
-        return False
-    elif arb.valeur == v:
-        return True
-    elif v < arb.valeur:
-        return appartient(arb.gauche, v)
-    else:
+    if arb is not None:
+        if arb.valeur == v:
+            return True
+        elif v < arb.valeur:
+            return appartient(arb.gauche, v)
         return appartient(arb.droit, v)
+    return False
 
 
 def affiche(arb):
@@ -65,10 +63,9 @@ def affiche(arb):
 def parfait(h):
     if h == 0:
         return None
-    else:
-        arb_gauche = parfait(h - 1)
-        arb_droit = parfait(h - 1)
-        return Noeud(0, arb_gauche, arb_droit)
+    arb_gauche = parfait(h - 1)
+    arb_droit = parfait(h - 1)
+    return Noeud(0, arb_gauche, arb_droit)
 
 
 # Les arbres binaires de recherches sont les arbres n°1 et n°2.
@@ -95,8 +92,7 @@ def ajout(arb, v):
     elif not appartient(arb, v):
         if v < arb.valeur:
             return Noeud(arb.valeur, ajout(arb.gauche, v), arb.droit)
-        else:
-            return Noeud(arb.valeur, arb.gauche, ajout(arb.droit, v))
+        return Noeud(arb.valeur, arb.gauche, ajout(arb.droit, v))
 
 
 def est_ABR(arb):
@@ -133,20 +129,29 @@ class ABR:
 
 
 def trier(tbl):
-    return sorted(tbl)
+    a = ABR()
+    for x in tbl:
+        a.ajouter(x)
+    return a.lister()
 
 
 def taille(arb, lettre):
-    if arb[lettre][0] == '' and arb[lettre][1] == '':
-        return 1
-    elif arb[lettre][0] == '':
-        return 1 + taille(arb, arb[lettre][1])
-    elif arb[lettre][1] == '':
-        return 1 + taille(arb, arb[lettre][0])
-    else:
-        return 1 + taille(arb, arb[lettre][0]) + taille(arb, arb[lettre][1])
+    if lettre != '':
+        return 1 + taille(arb, arb[lettre][0] + taille(arb, arb[lettre][1]))
+    return 0
 
 
 a = {'F': ['B', 'G'], 'B': ['A', 'D'], 'A': ['', ''], 'D': ['C', 'E'],
      'C': ['', ''], 'E': ['', ''], 'G': ['', 'I'], 'I': ['', 'H'], 'H': ['', '']}
-print(taille(a, 'F'))
+
+assert (taille(a, 'F') == 9)
+
+
+def nb_sup(v, abr):
+    if abr is not None:
+        if abr.valeur > v:
+            return 1 + nb_sup(v, abr.gauche) + nb_sup(v, abr.droit)
+        elif abr.valeur < v:
+            return nb_sup(v, abr.droit)
+        return 1 + nb_sup(v, abr.droit)
+    return 0
