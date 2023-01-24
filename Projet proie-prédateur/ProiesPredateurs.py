@@ -107,7 +107,7 @@ class Animal:
 
 class Loup(Animal):
     def __init__(self):
-        Animal.__init__(self, metabo=100, meta_max=200, conso=2, age_max=50, age_repro=10, meta_repro=120,
+        Animal.__init__(self, metabo=100, meta_max=200, conso=2, age_max=50, age_repro=10, meta_repro=100,
                         classe="loup", valeur_repas=10)
 
 
@@ -200,7 +200,7 @@ def reproduire_animaux():
 
 def deplacer_animaux():
     """Fait se déplacer les animaux selon les règles"""
-    for (x0, y0), (animal, _) in list(carte.animal.keys()):
+    for (x0, y0), (animal, _) in list(carte.animal.items()):
         if animal.classe == "lapin":
             herbe = {}
             for x, y in cases_voisines(x0, y0):  # Parcourir les cases voisines
@@ -281,16 +281,28 @@ class Graph():
     def get_vector(self):
         """Obtient et retourne les quantités de sol libre, lapins et loups
         sous forme de liste"""
-        pass
+        return [self.g, self.r, self.w]
 
     def reinit(self):
         """Réinitialise les données du graphique
         avec le vecteur initial puis le réaffiche"""
-        pass
+        self.x = [0]
+        self.g = []
+        self.r = []
+        self.w = []
+        self.update()
 
     def update(self):
         """Met à jour/réaffiche le graphique"""
-        pass
+        self.ax.clear()
+        self.ax.plot(self.x, self.g, label='Sol libre')
+        self.ax.plot(self.x, self.r, label='Lapins')
+        self.ax.plot(self.x, self.w, label='Loups')
+        self.ax.legend()
+        self.ax.set_xlabel('Temps')
+        self.ax.set_ylabel('Quantité')
+        self.ax.set_title('Évolution de la population')
+        self.canvas.draw()
 
     def ajoute_point(self):
         """Ajoute un point en mettant à jour
