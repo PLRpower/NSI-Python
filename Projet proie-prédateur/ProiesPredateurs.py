@@ -287,9 +287,9 @@ class Graph():
         """Réinitialise les données du graphique
         avec le vecteur initial puis le réaffiche"""
         self.x = [0]
-        self.g = []
-        self.r = []
-        self.w = []
+        self.g = [25 * 16]
+        self.r = [0]
+        self.w = [0]
         self.update()
 
     def update(self):
@@ -307,7 +307,21 @@ class Graph():
     def ajoute_point(self):
         """Ajoute un point en mettant à jour
         les contenus des quatre listes de valeurs"""
-        pass
+        lapins = 0
+        loups = 0
+        for (x0, y0), (animal, _) in list(carte.animal.items()):
+            if animal.classe == "lapin":  # Si l'animal est un lapin
+                lapins += 1
+            else:  # Si l'animal est un loup
+                loups += 1
+
+        print(lapins)
+        print(loups)
+        self.r.append(lapins)
+        self.w.append(loups)
+        self.g.append(25 * 16 - (lapins + loups))
+        self.x.append(len(self.x) + 1)
+        self.update()
 
     def withdraw(self):
         """Retire la fenêtre du graphique"""
