@@ -1,4 +1,4 @@
-from random import random, shuffle
+from random import random, shuffle, randint
 from tkinter import *
 
 import matplotlib.pyplot as plt
@@ -17,7 +17,7 @@ class Params:
 
     def __init__(self):
         # Paramètres modifiables à la volée :
-        self.dt = 100
+        self.dt = 1
         self.auto = True
 
         self.fen_para = Toplevel()  # Fenêtre de réglages
@@ -52,17 +52,17 @@ class Params:
         self.taille_loup = {"petit": 5, "moyen": 7, "grand": 20}
         # nombre de loups selon la taille
 
-        self.nouvelle_largeur(self.taille_largeur[self.taille.get()])
-
-    def nouvelle_largeur(self, l):
-        """Définit les longueurs en fonction du nombre l de cases en largeur"""
+        l = self.taille_largeur[self.taille.get()]
         self.largeur = l
         self.taille_case = Params.largeur_pixels // l
         self.hauteur = Params.hauteur_pixels // self.taille_case
 
     def change_taille(self):
         """Effectue le changement de largeur puis réinitialise le terrain"""
-        self.nouvelle_largeur(self.taille_largeur[self.taille.get()])
+        l = self.taille_largeur[self.taille.get()]
+        self.largeur = l
+        self.taille_case = Params.largeur_pixels // l
+        self.hauteur = Params.hauteur_pixels // self.taille_case
         init()
 
 
@@ -107,26 +107,24 @@ class Animal:
 
 class Loup(Animal):
     def __init__(self):
-        Animal.__init__(self, metabo=100, meta_max=200, conso=2, age_max=50, age_repro=10, meta_repro=100,
+        Animal.__init__(self, metabo=100, meta_max=200, conso=2, age_max=50, age_repro=10, meta_repro=120,
                         classe="loup", valeur_repas=10)
-
 
 class Lapin(Animal):
     def __init__(self):
-        Animal.__init__(self, metabo=20, meta_max=45, conso=3, age_max=25, age_repro=10, meta_repro=40, classe="lapin",
-                        valeur_repas=5)
+        Animal.__init__(self, metabo=20, meta_max=45, conso=3, age_max=25, age_repro=10, meta_repro=40, classe="lapin")
 
 
 def cases_voisines(x, y):
+    '''retourne la liste des coordonnées des cases voisines (non diagonales).
+        Dépend de la valeur de carte.params.tore'''
     voisins = []
-    # Si le tore est activé, on ajoute les cases voisines
-    if carte.params.tore.get():
+    if carte.params.tore.get():  # Si le tore est activé, on ajoute les cases voisines
         voisins.append(((x - 1) % carte.params.largeur, y))
         voisins.append(((x + 1) % carte.params.largeur, y))
         voisins.append((x, (y - 1) % carte.params.hauteur))
         voisins.append((x, (y + 1) % carte.params.hauteur))
-    # Si le tore est désactivé, on vérifie si les cases voisines sont bien dans la carte
-    else:
+    else:  # Si le tore est désactivé, on vérifie si les cases voisines sont bien dans la carte
         if x > 0:
             voisins.append((x - 1, y))
         if x < carte.params.largeur - 1:
@@ -138,79 +136,64 @@ def cases_voisines(x, y):
     return voisins
 
 
-def deplacement_aleatoire(x0, y0, liste):  # Déplacer un animal sur une case aléatoire (vide) d'une liste de cases
-    shuffle(liste)
-    for index, coordonnees in enumerate(liste):
-        x, y = coordonnees
-        if (x, y) not in carte.animal.keys():  # Si il n'y a pas d'autre animal dans cette case
-            carte.bouge_animal(x0, y0, x, y)  # Bouger l'animal dans la case choisie
-            break
-        else:
-            del liste[index]
-            continue
-
-
-def apparition_aleatoire(x0, y0, classe):  # Permet de faire apparaitre un animal sur une case aléatoire d'une liste
-    liste = cases_voisines(x0, y0)
-    shuffle(liste)
-    for index, coordonnees in enumerate(liste):
-        x, y = coordonnees
-        if (x, y) not in carte.animal.keys():  # Si il n'y a pas d'autre animal dans cette case
-            if classe == "lapin":
-                carte.place_animal(Lapin(), x, y)  # Placer un lapin
-            else:
-                carte.place_animal(Loup(), x, y)  # Placer un loup
-            break
-        else:
-            del liste[index]
-            continue
-
-
 def vieillir_animaux():
     """Fait vieillir chaque animal selon les règles.
     Si, ce faisant, un animal meurt, on l’élimine du terrain"""
     for (x, y), (animal, _) in list(carte.animal.items()):
-        animal.vieillir()  # Faire vieillir l'animal
         if animal.meurt():  # Vérifier si l'animal meurt
             carte.elimine_animal(x, y)  # Le supprimer de la carte
+        else:
+            animal.vieillir()  # Faire vieillir l'animal
 
 
 def nourrir_animaux():
     """Nourrit chaque animal selon les règles"""
     for (x0, y0), (animal, _) in list(carte.animal.items()):
         if animal.classe == "lapin":  # Si l'animal est un lapin
+            herbe = round(carte.herbe[x0][y0][
+                              0] / 3)  # Valeur du repas (divisé par 3 pour laisser la possibilité de mourir de faim)
+            animal.nourrir(herbe)  # Nourrir le lapin
             carte.coupe_herbe(x0, y0)  # Couper l'herbe
-            animal.nourrir()  # Nourrir le lapin
         else:  # Si l'animal est un loup
             for (x, y) in cases_voisines(x0, y0):  # Parcourir les cases voisines
-                if (x, y) in carte.animal.keys() and carte.animal[(x, y)][
+                if (x, y) in carte.animal and carte.animal[(x, y)][
                     0].classe == "lapin":  # Tester la présence d’un lapin
-                    carte.elimine_animal(x, y)  # Eliminer le lapin
-                    print(animal.metabo)
+                    carte.elimine_animal(x, y)  # Éliminer le lapin
                     animal.nourrir()  # Nourrir le loup
-                    print(animal.metabo)
 
 
 def reproduire_animaux():
     """Fait se reproduire les animaux selon les règles"""
-    for (x, y), (animal, _) in list(carte.animal.items()):
+    for (x0, y0), (animal, _) in list(carte.animal.items()):
         if animal.se_reproduit():  # Si l'animal est capable de se reproduire
-            apparition_aleatoire(x, y, animal.classe)  # Faire reproduire l'animal dans une case aléatoire
+            cases = cases_voisines(x0, y0)
+            shuffle(cases)
+            for x, y in cases:
+                if (x, y) not in carte.animal:  # Si il n'y a pas d'autre animal dans cette case
+                    carte.place_animal(Lapin() if animal.classe == "lapin" else Loup(), x, y)
+                    break
 
 
 def deplacer_animaux():
     """Fait se déplacer les animaux selon les règles"""
     for (x0, y0), (animal, _) in list(carte.animal.items()):
         if animal.classe == "lapin":
-            herbe = {}
-            for x, y in cases_voisines(x0, y0):  # Parcourir les cases voisines
-                herbe[(x, y)] = carte.herbe[x][y][0]  # Sauvegarder la taille de l'herbe des cases voisines
-            valeur_maximale = max(herbe.items(), key=lambda x: x[1])[1]  # Trouver la valeur de l'herbe la plus haute
-            cles_maximales = [k for k, v in herbe.items() if
-                              v == valeur_maximale]  # Trouver toutes les cases ayant cette valeur
-            deplacement_aleatoire(x0, y0, cles_maximales)  # Déplacer l'animal aléatoirement dans l'une de ces cases
+            herbe = {(x, y): carte.herbe[x][y][0] for x, y in cases_voisines(x0, y0)}
+            herbe_max = max(herbe.items(), key=lambda x: x[1])[1]  # Trouver la valeur de l'herbe la plus haute
+            coordonnees_herbe_max = [k for k, v in herbe.items() if
+                                     v == herbe_max]  # Trouver toutes les cases ayant cette valeur
+            deplacement_aleatoire(x0, y0,
+                                  coordonnees_herbe_max)  # Déplacer l'animal aléatoirement dans l'une de ces cases
         else:
             deplacement_aleatoire(x0, y0, cases_voisines(x0, y0))
+
+
+def deplacement_aleatoire(x0, y0, liste):  # Déplacer un animal sur une case aléatoire (vide) d'une liste de cases
+    shuffle(liste)
+    for x, y in liste:
+        if (x, y) not in carte.animal:  # Si il n'y a pas d'autre animal dans cette case
+            carte.bouge_animal(x0, y0, x, y)  # Bouger l'animal dans la case choisie
+            break
 
 
 def cycle():
@@ -287,7 +270,7 @@ class Graph():
         """Réinitialise les données du graphique
         avec le vecteur initial puis le réaffiche"""
         self.x = [0]
-        self.g = [25 * 16]
+        self.g = [carte.params.largeur * carte.params.hauteur]
         self.r = [0]
         self.w = [0]
         self.update()
@@ -307,20 +290,13 @@ class Graph():
     def ajoute_point(self):
         """Ajoute un point en mettant à jour
         les contenus des quatre listes de valeurs"""
-        lapins = 0
-        loups = 0
-        for (x0, y0), (animal, _) in list(carte.animal.items()):
-            if animal.classe == "lapin":  # Si l'animal est un lapin
-                lapins += 1
-            else:  # Si l'animal est un loup
-                loups += 1
-
-        print(lapins)
-        print(loups)
+        lapins = sum(1 for _, (animal, _) in carte.animal.items() if animal.classe == "lapin")
+        loups = sum(1 for _, (animal, _) in carte.animal.items() if animal.classe == "loup")
+        x_len = len(self.x)
         self.r.append(lapins)
         self.w.append(loups)
-        self.g.append(25 * 16 - (lapins + loups))
-        self.x.append(len(self.x) + 1)
+        self.g.append(carte.params.largeur * carte.params.hauteur - (lapins + loups))
+        self.x.append(x_len + 1)
         self.update()
 
     def withdraw(self):
@@ -400,7 +376,7 @@ def exemples():
     carte.place_animal(Lapin(), 5, 0)  # Place un nouveau lapin
 
     for (x, y) in [(24, 7), (5, 0)]:
-        if (x, y) in carte.animal.keys():  # Tester la présence d’un animal
+        if (x, y) in carte.animal:  # Tester la présence d’un animal
             print("Il y a un animal présent en", str((x, y)))
             classe = carte.animal[(x, y)][0].classe  # classe de l’animal
             print("Sa classe est :", classe)
@@ -418,18 +394,22 @@ def init():
     carte.reinit()
     graph.reinit()
 
-    generation()
+    nb_lapins = carte.params.taille_lapin[carte.params.taille.get()]
+    nb_loups = carte.params.taille_loup[carte.params.taille.get()]
 
+    generation(nb_lapins, Lapin)
+    generation(nb_loups, Loup)
     # exemples()
 
 
-def generation():
-    """Réinitialise le terrain et le graphique.
-    Place des lapins et loups en fonction des paramètres"""
-    carte.place_animal(Lapin(), 12, 0)  # Crée et place quelques animaux
-    carte.place_animal(Lapin(), 2, 7)
-    carte.place_animal(Loup(), 24, 7)
-
+def generation(nombre, animal):
+    for i in range(nombre):
+        while True:
+            x_aleatoire = randint(0, carte.params.largeur - 1)
+            y_aleatoire = randint(0, carte.params.hauteur - 1)
+            if (x_aleatoire, y_aleatoire) not in carte.animal:
+                carte.place_animal(animal(), x_aleatoire, y_aleatoire)
+                break
 
 def _quit():
     fenetre.quit()  # arrête le mainloop
