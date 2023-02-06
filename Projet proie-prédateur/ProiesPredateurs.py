@@ -147,6 +147,7 @@ def cases_voisines(x, y):
             voisins.append((x, y + 1))
     return voisins
 
+
 def vieillir_animaux():
     """Fait vieillir chaque animal selon les règles.
     Si, ce faisant, un animal meurt, on l’élimine du terrain"""
@@ -155,6 +156,7 @@ def vieillir_animaux():
             carte.elimine_animal(x, y)  # Le supprimer de la carte
         else:
             animal.vieillir()  # Faire vieillir l'animal
+
 
 def nourrir_animaux():
     """Nourrit chaque animal selon les règles"""
@@ -170,6 +172,7 @@ def nourrir_animaux():
                     carte.elimine_animal(x, y)  # Éliminer le lapin
                     animal.nourrir()  # Nourrir le loup
 
+
 def reproduire_animaux():
     """Fait se reproduire les animaux selon les règles"""
     for (x0, y0), (animal, _) in list(carte.animal.items()):
@@ -184,49 +187,58 @@ def reproduire_animaux():
 
 def deplacer_animaux():
     """Fait se déplacer les animaux selon les règles"""
-    for (x0, y0), (animal, _) in list(carte.animal.items()):
-        if animal.classe == "lapin":
-            deplacer_lapin(x0, y0)
-        else:
-            deplacer_loup(x0, y0)
+    for (x0, y0), (animal, _) in list(carte.animal.items()):  # Parcourir les animaux
+        if animal.classe == "lapin":  # Si l'animal est un lapin
+            deplacer_lapin(x0, y0)  # Déplacer le lapin selon les règles
+        elif animal.classe == "loup":  # Si l'animal est un loup
+            deplacer_loup(x0, y0)  # Déplacer le loup selon les règles
 
 
 def deplacer_lapin(x0, y0):
-    if carte.params.lapin_intelligent.get():
-        herbe = {(x, y): carte.herbe[x][y][0] for x, y in cases_voisines(x0, y0)}
+    """Fait se déplacer les lapins selon les règles (lapin intelligent/tore)"""
+    if carte.params.lapin_intelligent.get():  # Si l'option "lapins intelligents" est activé
+        herbe = {(x, y): carte.herbe[x][y][0] for x, y in
+                 cases_voisines(x0, y0)}  # Obtenir la liste de l'herbe autour du lapin avec la hauteur de l'herbe
         herbe_max = max(herbe.items(), key=lambda x: x[1])[1]  # Trouver la valeur de l'herbe la plus haute
-        coordonnees_herbe_max = [k for k, v in herbe.items() if v == herbe_max]  # Trouver toutes les cases maximales
+        coordonnees_herbe_max = [k for k, v in herbe.items() if
+                                 v == herbe_max]  # Trouver toutes les cases ayant l'herbe maximale
         shuffle(coordonnees_herbe_max)
-        deplacement_aleatoire(x0, y0, coordonnees_herbe_max)  # Déplacer l'animal aléatoirement dans l'une de ces cases
-    else:
-        voisins = cases_voisines(x0, y0)
-        shuffle(voisins)
-        deplacement_aleatoire(x0, y0, voisins)
+        deplacement(x0, y0, coordonnees_herbe_max)  # Déplacer l'animal dans la première case libre autour de lui.
+    else:  # Si l'option "lapins intelligents" est désactivé
+        voisins = cases_voisines(x0, y0)  # Obtenir les cases voisines du lapin
+        shuffle(voisins)  # Mélanger la liste des cases afin de se déplacer aléatoirement
+        deplacement(x0, y0, voisins)  # Se déplacer dans la première case libre de la liste
 
 
 def deplacer_loup(x0, y0):
-    lapins = [(x, y) for (x, y), (animal, _) in list(carte.animal.items()) if animal.classe == "lapin"]
-    if lapins and carte.params.loup_intelligent.get():
-        lapin_proche = min(lapins, key=lambda coord: dist_carre(x0, y0, coord[0], coord[1]))
-        coordonnee_triee = sorted(cases_voisines(x0, y0),
-                                  key=lambda coord: dist_carre(coord[0], coord[1], lapin_proche[0], lapin_proche[1]))
-        deplacement_aleatoire(x0, y0, coordonnee_triee)  # Déplacer l'animal aléatoirement dans l'une de ces cases
-    else:
-        voisins = cases_voisines(x0, y0)
-        shuffle(voisins)
-        deplacement_aleatoire(x0, y0, voisins)
+    """Fait se déplacer les loups selon les règles (loup intelligent/tore)"""
+    lapins = [(x, y) for (x, y), (animal, _) in list(carte.animal.items()) if
+              animal.classe == "lapin"]  # Obtenir la liste des coordonnées des lapins
+    if lapins and carte.params.loup_intelligent.get():  # S'il reste des lapins et que l'option "loups intelligents" est activé
+        lapin_proche = min(lapins, key=lambda coord: calcul_distance(x0, y0, coord[0], coord[
+            1]))  # Calculer et obtenir les coordonnés du lapin le plus proche
+        cases_autour = sorted(cases_voisines(x0, y0),
+                              key=lambda coord: calcul_distance(coord[0], coord[1], lapin_proche[0], lapin_proche[
+                                  1]))  # Obtenir les cases voisines dans l'ordre du plus proche au moins proche du lapin
+        deplacement(x0, y0, cases_autour)  # Déplacer le loup la première case libre autour de lui
+    else:  # Si l'option "loups intelligents" est désactivé
+        voisins = cases_voisines(x0, y0)  # Obtenir les cases voisines du loup
+        shuffle(voisins)  # Mélanger la liste des cases afin de se déplacer aléatoirement
+        deplacement(x0, y0, voisins)  # Se déplacer dans la première case libre de la liste
 
 
-def dist_carre(x0, y0, x1, y1):
-    if carte.params.tore.get():
+def calcul_distance(x0, y0, x1, y1):
+    """Calcul d'une distance entre deux cases"""
+    if carte.params.tore.get():  # Si le tore est activé
         dx = min(abs(x0 - x1), carte.params.largeur - abs(x0 - x1))
         dy = min(abs(y0 - y1), carte.params.largeur - abs(y0 - y1))
         return dx ** 2 + dy ** 2
-    else:
+    else:  # Si le tore est désactivé
         return (x0 - x1) ** 2 + (y0 - y1) ** 2
 
 
-def deplacement_aleatoire(x0, y0, coordonnees):  # Déplacer un animal sur une case aléatoire (vide) d'une liste de cases
+def deplacement(x0, y0, coordonnees):
+    """Déplacement d'un animal sur la première case libre de la liste des cases"""
     for x, y in coordonnees:
         if (x, y) not in carte.animal:  # Si il n'y a pas d'autre animal dans cette case
             carte.bouge_animal(x0, y0, x, y)  # Bouger l'animal dans la case choisie
@@ -379,17 +391,20 @@ def init():
     carte.reinit()
     graph.reinit()
 
-    nb_lapins = carte.params.taille_lapin[carte.params.taille.get()]
-    nb_loups = carte.params.taille_loup[carte.params.taille.get()]
+    nb_lapins = carte.params.taille_lapin[
+        carte.params.taille.get()]  # Nombre de lapins en fonction de la taille du terrain
+    nb_loups = carte.params.taille_loup[
+        carte.params.taille.get()]  # Nombre de loups en fonction de la taille du terrain
 
     generation(nb_lapins, Lapin)
     generation(nb_loups, Loup)
 
 
 def generation(nombre, animal):
+    """Génération aléatoire d'un certain nombre d'animaux sur le terrain"""
     for i in range(nombre):
-        while True:
-            x_aleatoire = randint(0, carte.params.largeur - 1)
+        while True:  # Tant que la case aléatoire generee est occupée
+            x_aleatoire = randint(0, carte.params.largeur - 1)  # Générer une coordonnée
             y_aleatoire = randint(0, carte.params.hauteur - 1)
             if (x_aleatoire, y_aleatoire) not in carte.animal:
                 carte.place_animal(animal(), x_aleatoire, y_aleatoire)
