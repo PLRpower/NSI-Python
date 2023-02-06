@@ -28,10 +28,8 @@ class Carte(Canvas):
         self.pack()
 
     def reinit(self):
-        """
-        Réinitialise le terrain. À exécuter quand on veut recommencer
-        et après avoir modifié la largeur dans les paramètres
-        """
+        """Réinitialise le terrain. À exécuter quand on veut recommencer
+        et après avoir modifié la largeur dans les paramètres"""
         self.delete('all')
 
         t_icone = self.params.taille_case - 2 * self.params.border
@@ -83,16 +81,16 @@ class Carte(Canvas):
                     self.coord_to_center(x), self.coord_to_center(y))
 
     def elimine_animal(self, x, y):
-        """supprime un animal du terrain"""
+        """Supprime un animal du terrain"""
         _, rep = self.animal.pop((x, y))
         self.delete(rep)
 
     def coupe_herbe(self, x, y):
         """Coupe l’herbe aux coordonnées données et retourne la quantité de nourriture"""
-        un = self.herbe[x][y][0]
+        UN = self.herbe[x][y][0]
         self.herbe[x][y][0] = 0
         self.itemconfig(self.herbe[x][y][1], fill=self.couleur(0))
-        return un
+        return UN
 
     def coord_to_center(self, x):
         return (2 * x + 1) * self.params.taille_case // 2 + self.params.border
