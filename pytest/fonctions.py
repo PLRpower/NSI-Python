@@ -1,4 +1,3 @@
-
 # Valeur maximale d'une liste
 def maximum(liste):
     if not liste:
