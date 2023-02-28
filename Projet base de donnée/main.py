@@ -9,12 +9,10 @@ def main():
     print("\n---------\nConnexion\n---------")
     while True:
         num_etu = input("Saisissez votre numéro d'étudiant : ")
-        connexion, curseur = ouvrir_connexion()
-        curseur.execute("SELECT nom, prenom FROM Eleve WHERE num_etu LIKE ?", (num_etu,))
-        etudiant = curseur.fetchone()
-        connexion.close()
+        etudiant = requete("SELECT nom, prenom FROM Eleve WHERE num_etu LIKE ?", (num_etu,))
         if etudiant:
-            print("Bienvenue dans le centre de documentation et d'information", etudiant[0], etudiant[1], "!")
+            nom, prenom = etudiant[0]
+            print("Bienvenue dans le centre de documentation et d'information", nom, prenom, "!")
             break  # Arrêter la boucle While
         print("\nNuméro d'étudiant introuvable, veuillez réessayez.")
 
@@ -47,18 +45,18 @@ def rechercher():
     print("\n------------------\nRecherche de livre\n------------------")
 
     # Procédure de recherche du livre dans la base de données
-    livre = afficher_resultats(recherche_livre(), ["#", "Titre", "Auteur.e", "Année", "ISBN"])
+    titre, auteur, annee, isbn = afficher_resultats(recherche_livre(), ["#", "Titre", "Auteur.e", "Année", "ISBN"])
 
     # Récupération de la date de retour de l'emprunt (s'il y en a un)
-    connexion, curseur = ouvrir_connexion()
-    curseur.execute("SELECT date_ret FROM Emprunt WHERE isbn LIKE ?", (livre[3],))
-    emprunt = curseur.fetchone()
-    connexion.close()
+    emprunt = requete("SELECT date_ret FROM Emprunt WHERE isbn LIKE ?", (isbn,))
 
     # Affichage des informations sur le livre et l'emprunt en cours
     message = "\nLe livre intitulé '{0}' de {1}, qui a été publié en {2} sous l'ISBN {3} a été découvert dans le centre de documentation et d'information."
-    message += "\nIl n'est actuellement pas emprunté." if not emprunt else "\nIl est actuellement emprunté jusqu'au {4}."
-    print(message.format(livre[0], livre[1], livre[2], livre[3], emprunt[0] if emprunt else ""))
+    if emprunt:
+        message += "\nIl est actuellement emprunté jusqu'au {4}."
+    else:
+        message += "\nIl n'est actuellement pas emprunté."
+    print(message.format(titre, auteur, annee, isbn, emprunt[0] if emprunt else ""))
 
     # Attente de l'utilisateur avant de retourner au menu
     input("\nRetourner au menu (entrée) >")
@@ -68,21 +66,17 @@ def emprunter(num_etu):
     print("\n-------\nEmprunt\n-------")
 
     # Procédure de recherche du livre dans la base de données
-    livre = afficher_resultats(recherche_livre(), ["#", "Titre", "Auteur.e", "Année", "ISBN"])
+    titre, auteur, annee, isbn = afficher_resultats(recherche_livre(), ["#", "Titre", "Auteur.e", "Année", "ISBN"])
 
     # Récupération de la date de retour de l'emprunt (s'il y en a un)
-    connexion, curseur = ouvrir_connexion()
-    curseur.execute("SELECT date_ret FROM Emprunt WHERE isbn LIKE ?", (livre[3],))
-    emprunt = curseur.fetchone()
+    emprunt = requete("SELECT date_ret FROM Emprunt WHERE isbn LIKE ?", (isbn,))[0]
 
     if not emprunt:
         date_retour = (datetime.date.today() + datetime.timedelta(weeks=3)).strftime('%Y-%m-%d')
-        curseur.execute("INSERT INTO Emprunt VALUES (?, ?, ?)", (livre[3], num_etu, date_retour))
-        connexion.commit()
-        print(f"\nVous avez correctement emprunté le livre intitulé '{livre[0]}' de {livre[1]} jusqu'au {date_retour}")
+        requete("INSERT INTO Emprunt VALUES (?, ?, ?)", (isbn, num_etu, date_retour))
+        print(f"\nVous avez correctement emprunté le livre intitulé '{titre}' de {auteur} jusqu'au {date_retour}")
     else:
         print(f"\nCe livre est déjà emprunté (jusqu'au {emprunt[0]}).", end="")
-    connexion.close()
 
     # Attente de l'utilisateur avant de retourner au menu
     input("\nRetourner au menu (entrée) >")
@@ -91,24 +85,22 @@ def emprunter(num_etu):
 def rendre():
     print("\n--------------\nRendre un livre\n--------------")
 
+    # Saisie du numéro d'étudiant de l'élève
     eleve = input("Saisissez votre numéro d'étudiant : ")
 
     # Récupération des emprunts de l'élève (s'il y en a)
-    connexion, curseur = ouvrir_connexion()
-    curseur.execute("SELECT titre, nom, annee, isbn, date_ret FROM Emprunt "
-                    "JOIN Livre using (isbn)"
-                    "JOIN Ecrire using(isbn) "
-                    "JOIN Auteur using (a_id)"
-                    "WHERE num_etu LIKE ?", (eleve,))
-    emprunts = curseur.fetchall()
-    connexion.close()
+    emprunts = requete("SELECT titre, nom, annee, isbn, date_ret FROM Emprunt "
+                       "JOIN Livre USING (isbn)"
+                       "JOIN Ecrire USING(isbn) "
+                       "JOIN Auteur USING (a_id)"
+                       "WHERE num_etu LIKE ?", (eleve,))
 
     if emprunts:
-        livre = afficher_resultats(emprunts, ["#", "Titre", "Auteur.e", "Année", "ISBN", "Date retour"])
-        connexion, curseur = ouvrir_connexion()
-        curseur.execute("DELETE FROM Emprunt WHERE isbn LIKE ?", (livre[3],))
-        connexion.commit()
-        connexion.close()
+        # Procédure de recherche du livre emprunté souhaité
+        titre, auteur, annee, isbn, date_ret = afficher_resultats(emprunts, ["#", "Titre", "Auteur.e", "Année", "ISBN",
+                                                                             "Date retour"])
+
+        requete("DELETE FROM Emprunt WHERE isbn LIKE ?", (isbn,))
     else:
         print("\nCet.te élève.e n'a actuellement aucun emprunt de livre.")
 
@@ -122,14 +114,11 @@ def recherche_livre():
     annee = "%" + input("Année : ") + "%"
     isbn = "%" + input("ISBN : ") + "%"
 
-    connexion, curseur = ouvrir_connexion()
-    curseur.execute("SELECT titre, nom, annee, isbn FROM Livre "
-                    "JOIN Ecrire USING(isbn)"
-                    "JOIN Auteur USING(a_id)"
-                    "WHERE titre LIKE ? AND nom LIKE ? AND annee LIKE ? AND isbn LIKE ?",
-                    (titre, auteur, annee, isbn))
-    resultats = curseur.fetchall()
-    connexion.close()
+    resultats = requete("SELECT titre, nom, annee, isbn FROM Livre "
+                        "JOIN Ecrire USING(isbn)"
+                        "JOIN Auteur USING(a_id)"
+                        "WHERE titre LIKE ? AND nom LIKE ? AND annee LIKE ? AND isbn LIKE ?",
+                        (titre, auteur, annee, isbn))
     if not resultats:
         print("\nAucun livre n'a été trouvé avec vos paramètres de recherche, veuillez réessayer.")
         return recherche_livre()
@@ -155,9 +144,14 @@ def afficher_resultats(resultats, noms_champs):
             print("\nVeuillez saisir un numéro correct.")
 
 
-def ouvrir_connexion():
+def requete(sql, arguments):
     connexion = sqlite3.connect('cdi.db')
-    return connexion, connexion.cursor()
+    curseur = connexion.cursor()
+    curseur.execute(sql, arguments)
+    resultat = curseur.fetchall()
+    connexion.commit()
+    connexion.close()
+    return resultat
 
 
 main()
