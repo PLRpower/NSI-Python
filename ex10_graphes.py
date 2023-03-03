@@ -16,7 +16,7 @@ class Graphe:
         return list(range(self.n))
 
     def voisins(self, s):
-        return [i for i in range(self.n) if self.arc(s, i)]
+        return [i for i in range(self.n) if self.adj[s][i]]
 
     def degre(self, s):
         return sum(self.adj[s])

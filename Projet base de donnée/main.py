@@ -1,32 +1,39 @@
 import datetime
 import sqlite3
 
-from prettytable import PrettyTable
+import prettytable
 
 
-def connexion():
-    # Connexion avec l'identifiant d'un étudiant
+def login():
+    """
+    Procédure de connexion avec l'identifiant du numéro de l'élève
+    """
     print("\n---------\nConnexion\n---------")
-    while True:
+    while True:  # Tant que l'utilisateur n'est pas connecté
+
+        # Recherche du numéro d'étudiant dans la base de donnée
         num_etu = input("Saisissez votre numéro d'étudiant (copier-coller : 745611421242) : ")
         etudiant = requete("SELECT nom, prenom FROM Eleve WHERE num_etu LIKE ?", [num_etu])
-        if etudiant:
+
+        if etudiant:  # Si le numéro d'étudiant a été trouvé
             nom, prenom = etudiant[0]
             print("\nBienvenue dans le centre de documentation et d'information", nom, prenom, "!")
-            input("Accéder au menu (entrée) >")
-            return menu(num_etu)
+            input("Accéder au menu (entrée) >")  # Attente de l'utilisateur avant d'accéder au menu
+            return menu(num_etu)  # Arrêter la boucle et continuer sur le menu
         print("\nNuméro d'étudiant introuvable, veuillez réessayez.")
 
 
 def menu(num_etu):
-    # Menu
+    """
+    Navigation dans les options possibles via un menu
+    """
     while True:
         print("\n----", "Menu", "----", "(d) rechercher un livre", "(e) emprunter", "(r) rendre", "(a) ajouter",
               "(s) supprimer", "(p) rechercher un prêt", "(q) quitter", sep="\n")
         choix = input("\nQue souhaitez vous faire ? ")
         match choix:
             case "d":
-                rechercher()
+                rechercher_livre()
             case "e":
                 emprunter(num_etu)
             case "r":
@@ -36,7 +43,7 @@ def menu(num_etu):
             case "s":
                 supprimer()
             case "p":
-                pass
+                rechercher_pret(num_etu)
             case "q":
                 break
             case _:
@@ -45,11 +52,14 @@ def menu(num_etu):
     print("\nSortie du programme. Au revoir !")
 
 
-def rechercher():
+def rechercher_livre():
+    """
+    Procédure de recherche de livre et d'affichage de ses informations
+    """
     print("\n------------------\nRecherche de livre\n------------------")
 
     # Procédure de recherche du livre dans la base de données
-    titre, auteur, annee, isbn = choix_livre(recherche_livre(), ["Titre", "Auteur.e", "Année", "ISBN"])
+    titre, auteur, annee, isbn = choix_livre(recherche(), ["Titre", "Auteur.e", "Année", "ISBN"])
 
     # Récupération de la date de retour de l'emprunt (s'il y en a un)
     emprunt = requete("SELECT date_ret FROM Emprunt WHERE isbn LIKE ?", [isbn])
@@ -62,23 +72,30 @@ def rechercher():
 
 
 def emprunter(num_etu):
+    """
+    Procédure d'emprunt d'un livre
+    """
     print("\n-------\nEmprunt\n-------")
 
     # Procédure de recherche du livre dans la base de données
-    titre, auteur, annee, isbn = choix_livre(recherche_livre(), ["Titre", "Auteur.e", "Année", "ISBN"])
+    titre, auteur, annee, isbn = choix_livre(recherche(), ["Titre", "Auteur.e", "Année", "ISBN"])
 
-    # Récupération de la date de retour de l'emprunt (s'il y en a un)
-    emprunt = requete("SELECT date_ret FROM Emprunt WHERE isbn LIKE ?", [isbn])
+    try:
+        # Obtenir la date en format DATETIME du jour actuel + 3 semaines (durée de l'emprunt)
+        date_retour = (datetime.date.today() + datetime.timedelta(weeks=3)).strftime('%Y-%m-%d')
 
-    if emprunt:  # Si le livre est déjà emprunté
-        print(f"\nCe livre est déjà emprunté (jusqu'au {emprunt[0][0]}).")
-        return
-    date_retour = (datetime.date.today() + datetime.timedelta(weeks=3)).strftime('%Y-%m-%d')
-    requete("INSERT INTO Emprunt VALUES (?, ?, ?)", [isbn, num_etu, date_retour])
-    print(f"\nVous avez correctement emprunté le livre intitulé '{titre}' de {auteur} jusqu'au {date_retour}")
+        # Ajouter dans la base de donnée un emprunt avec le numéro de l'étudiant
+        requete("INSERT INTO Emprunt VALUES (?, ?, ?)", [isbn, num_etu, date_retour])
+
+        print(f"\nVous avez correctement emprunté le livre intitulé '{titre}' de {auteur} jusqu'au {date_retour}")
+    except:
+        print(f"\nCe livre est déjà emprunté.")
 
 
 def rendre(num_etu):
+    """
+    Procédure de rendu d'un livre
+    """
     print("\n--------------\nRendre un livre\n--------------")
 
     # Récupération des emprunts de l'élève (s'il y en a)
@@ -92,20 +109,27 @@ def rendre(num_etu):
         # Procédure de recherche du livre emprunté souhaité
         titre, auteur, annee, isbn, date_ret = choix_livre(emprunts,
                                                            ["Titre", "Auteur.e", "Année", "ISBN", "Date retour"])
+
+        # Suppression de l'emprunt dans la base de donnée à partir du numéro d'étudiant
         requete("DELETE FROM Emprunt WHERE isbn LIKE ?", [isbn])
+
         print(f"\nLe livre {titre} de {auteur} à correctement été rendu.")
-        return
-    print("\nCet.te élève.e n'a actuellement aucun emprunt de livre.")
+    else:
+        print("\nVous n'avez actuellement aucun emprunt de livre.")
 
 
 def ajouter():
+    """
+    Procédure d'ajout de livre/auteur
+    """
     print("\n--------\nAjouter\n--------")
 
-    while True:
+    while True:  # Tant que l'utilisateur ne choisi pas entre l'auteur et le livre
         print("(a) ajouter un auteur\n(l) ajouter un livre")
         choix = input("\nQue souhaitez vous faire ? ")
         match choix:
-            case "a":
+
+            case "a":  # Ajout d'un auteur
                 while True:
                     nom = input("\nSaisissez le nom de l'auteur : ")
                     if not nom:
@@ -120,7 +144,8 @@ def ajouter():
                     requete("INSERT INTO Auteur VALUES (?, ?)", [a_id, nom])
                     print(f"\nL'auteur {nom} à correctement été ajouté à la base de donnée du CDI.")
                 break
-            case "l":
+
+            case "l":  # Ajout d'un livre
                 while True:
                     isbn = input("Saisissez l'ISBN du livre : ")
                     if not isbn:
@@ -168,20 +193,24 @@ def ajouter():
                     a_id = int(requete("SELECT MAX(a_id) FROM Auteur")[0][0]) + 1
                     requete("INSERT INTO Auteur VALUES (?, ?)", [a_id, auteur])
                     requete("INSERT INTO Ecrire VALUES (?, ?)", [a_id, isbn])
+                    print(
+                        f"\nLe livre {titre} a correctement été ajouté à la base de donnée du CDI, avec un nouvel auteur : {auteur}.")
+
                 else:
                     requete("INSERT INTO Ecrire VALUES (?, ?)", [a_id[0][0], isbn])
-                print(f"\nLe livre {titre} a correctement été ajouté à la base de donnée du CDI.")
+                    print(f"\nLe livre {titre} a correctement été ajouté à la base de donnée du CDI.")
                 break
             case _:
                 print("Je n'ai pas compris...")
 
 
 def supprimer():
-    print("\n------------\nSupprimer un livre\n------------")
-    titre, auteur, annee, isbn = choix_livre(recherche_livre(), ["Titre", "Auteur.e", "Année", "ISBN"])
+    print("\n----------------\nSupprimer un livre\n----------------")
+    titre, auteur, annee, isbn = choix_livre(recherche(), ["Titre", "Auteur.e", "Année", "ISBN"])
 
     requete("DELETE FROM Livre WHERE isbn = ?", [isbn])
-    a_id = int(requete("SELECT a_id FROM Auteur")[0][0]) + 1
+    a_id = int(requete("SELECT a_id FROM Auteur WHERE UPPER(nom) = UPPER(?)", [auteur])[0][0])
+    print(a_id)
     requete("DELETE FROM Ecrire WHERE isbn = ? AND a_id = ?", [isbn, a_id])
     livres_auteur = requete("SELECT COUNT(*) FROM Ecrire WHERE isbn = ? AND a_id = ?", [isbn, a_id])[0][0]
     if livres_auteur == 0:
@@ -204,9 +233,26 @@ def supprimer():
                     print("Je n'ai pas compris...")
 
 
-def recherche_livre():
+def rechercher_pret(num_etu):
+    # Récupération des emprunts de l'élève (s'il y en a)
+    emprunts = requete("SELECT titre, nom, annee, isbn, date_ret FROM Emprunt "
+                       "JOIN Livre USING (isbn)"
+                       "JOIN Ecrire USING(isbn) "
+                       "JOIN Auteur USING (a_id)"
+                       "WHERE num_etu LIKE ?", [num_etu])
+
+    if emprunts:
+        table = prettytable.PrettyTable()
+        table.field_names = ["Titre", "Auteur.e", "Année", "ISBN", "Date retour"]
+        table.add_rows(emprunts)
+        print("\n", table)
+    else:
+        print("Vous n'avez pas d'emprunt actuellement.")
+
+
+def recherche():
     """
-    Procédure de recherche d'un livre (avec le titre, l'auteur, l'année et l'ISBN).
+    Fonction qui permet de trouver un livre soit grâce à l'ISBN, soit avec le titre, l'auteur et l'année.
     """
     isbn = input("ISBN (laisser vide pour rechercher avec le titre, l'auteur et l'année) : ")
     titre, auteur, annee = "%%", "%%", "%%"
@@ -225,17 +271,17 @@ def recherche_livre():
     if resultats:
         return resultats
     print("\nAucun livre n'a été trouvé avec vos paramètres de recherche, veuillez réessayer.")
-    return recherche_livre()
+    return recherche()
 
 
 def choix_livre(resultats, noms_champs):
     """
-    Permet de créer un tableau avec les différents résultats trouvés et laisser l'utilisateur choisir le choix final.
+    Permet de créer un tableau avec les résultats fournis en arguments et laisser l'utilisateur choisir le choix final.
     """
     nombre_resultats = len(resultats)
     if nombre_resultats == 1:
         return resultats[0]
-    table = PrettyTable()
+    table = prettytable.PrettyTable()
     table.field_names = ["#"] + noms_champs
     table.add_rows([[i, *rows] for i, rows in enumerate(resultats, start=1)])
     print("\n", table, "\nPlusieurs livres ont étés trouvés avec vos paramètres de recherche.")
@@ -265,4 +311,4 @@ def requete(sql, arguments=None):
         return resultat  # Renvoyer le résultat (par exemple pour les requêtes SELECT)
 
 
-connexion()
+login()
