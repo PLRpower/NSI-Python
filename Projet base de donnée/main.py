@@ -13,7 +13,7 @@ def login():
 
         # Recherche du numéro d'étudiant dans la base de donnée
         num_etu = input("Saisissez votre numéro d'étudiant (copier-coller : 745611421242) : ")
-        etudiant = requete("SELECT nom, prenom FROM Eleve WHERE num_etu LIKE ?", [num_etu])
+        etudiant = requete("SELECT nom, prenom FROM Eleve WHERE num_etu = ?", [num_etu])
 
         if etudiant:  # Si le numéro d'étudiant a été trouvé
             nom, prenom = etudiant[0]
@@ -62,7 +62,7 @@ def rechercher_livre():
     titre, auteur, annee, isbn = choix_livre(recherche(), ["Titre", "Auteur.e", "Année", "ISBN"])
 
     # Récupération de la date de retour de l'emprunt (s'il y en a un)
-    emprunt = requete("SELECT date_ret FROM Emprunt WHERE isbn LIKE ?", [isbn])
+    emprunt = requete("SELECT date_ret FROM Emprunt WHERE isbn = ?", [isbn])
 
     # Affichage des informations sur le livre et l'emprunt en cours
     print(
@@ -88,7 +88,7 @@ def emprunter(num_etu):
         requete("INSERT INTO Emprunt VALUES (?, ?, ?)", [isbn, num_etu, date_retour])
 
         print(f"\nVous avez correctement emprunté le livre intitulé '{titre}' de {auteur} jusqu'au {date_retour}")
-    except:
+    except sqlite3.Error:
         print(f"\nCe livre est déjà emprunté.")
 
 
@@ -103,7 +103,7 @@ def rendre(num_etu):
                        "JOIN Livre USING (isbn)"
                        "JOIN Ecrire USING(isbn) "
                        "JOIN Auteur USING (a_id)"
-                       "WHERE num_etu LIKE ?", [num_etu])
+                       "WHERE num_etu = ?", [num_etu])
 
     if emprunts:
         # Procédure de recherche du livre emprunté souhaité
@@ -111,7 +111,7 @@ def rendre(num_etu):
                                                            ["Titre", "Auteur.e", "Année", "ISBN", "Date retour"])
 
         # Suppression de l'emprunt dans la base de donnée à partir du numéro d'étudiant
-        requete("DELETE FROM Emprunt WHERE isbn LIKE ?", [isbn])
+        requete("DELETE FROM Emprunt WHERE isbn = ?", [isbn])
 
         print(f"\nLe livre {titre} de {auteur} à correctement été rendu.")
     else:
@@ -239,7 +239,7 @@ def rechercher_pret(num_etu):
                        "JOIN Livre USING (isbn)"
                        "JOIN Ecrire USING(isbn) "
                        "JOIN Auteur USING (a_id)"
-                       "WHERE num_etu LIKE ?", [num_etu])
+                       "WHERE num_etu = ?", [num_etu])
 
     if emprunts:
         table = prettytable.PrettyTable()
