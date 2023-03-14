@@ -92,53 +92,29 @@ class Graphe8:
     def supprimer_arete(self, s1, s2):
         self.supprimer_arc(s1, s2)
 
-    def __str__(self):
-        voisins = [[] for _ in range(self.n)]
-        for s in range(self.n):
-            for v in self.voisins(s):
-                voisins[s].append(str(v))
-        resultat = ''
-        for s in range(self.n):
-            resultat += f"{s} {' '.join(voisins[s])}\n" if voisins[s] else f"{s}\n"
-        return resultat
-
     def est_connexe(self):
         if not self.sommets():
-            # Si le graphe est vide, il est connexe par définition
             return True
 
-        # Initialisation du dictionnaire des sommets visités à False
-        sommets_visites = {sommet: False for sommet in self.sommets()}
-
-        # On commence par choisir un sommet de départ au hasard
         sommet_depart = self.sommets()[0]
-
-        # On effectue un parcours en profondeur à partir du sommet de départ
-        parcours_profondeur(self, sommet_depart, sommets_visites)
-
-        # Si tous les sommets ont été visités, le graphe est connexe
-        return all(sommets_visites.values())
+        vus = parcours_profondeur(self, sommet_depart)
+        return all(vus)
 
 
-def parcours_profondeur(graphe, sommet, sommets_visites):
-    sommets_visites[sommet] = True
-    for voisin in graphe.voisins(sommet):
-        if not sommets_visites[voisin]:
-            parcours_profondeur(graphe, voisin, sommets_visites)
+def parcours_profondeur(graphe, sommet):
+    """Parcours en profondeur depuis le sommet"""
+    vus = []
 
+    def parcours_rec(graphe, sommet):
+        """Utilisation d’une fonction récursive"""
+        if sommet not in vus:
+            vus.append(sommet)  # préfixe
+            for v in graphe.voisins(sommet):
+                parcours_rec(graphe, v)
 
-# création d'un graphe vide avec 3 sommets
-g = Graphe8(3)
+    parcours_rec(graphe, sommet)
+    return vus
 
-# ajout d'un sommet et d'arêtes
-g.ajouter_sommet()
-g.ajouter_arete(0, 3)
-g.ajouter_arete(1, 3)
-g.ajouter_arete(2, 3)
-
-# test si une arête existe
-assert g.arete(0, 1) == False
-assert g.arete(0, 3) == True
 
 """
 
@@ -157,33 +133,179 @@ Exercice 11:
 
 3. mystere(g, u, v) permet de vérifier si le sommet v est atteignable
  à partir du sommet u dans le graphe g en utilisant un parcours en profondeur.
-
-Exercice 13:
-
 """
 
 
-def parcours_chemin(g, vus, org, s):
-    """Parcours depuis le sommet s, en venant de org"""
-    if s not in vus:
-        vus[s] = org
-    for v in g.voisins(s):
-        if v not in vus:
-            parcours_chemin(g, vus, s, v)
+# Exercice 13
 
 
-def chemin(g, u, v):
-    """Un chemin de u a v, le cas échéant, None sinon"""
+def parcours_chemin(graphe, vus, org, sommet):
+    """Parcours depuis le sommet, en venant de org"""
+    if sommet not in vus:
+        vus[sommet] = org
+    for v in graphe.voisins(sommet):
+        parcours_chemin(graphe, vus, sommet, v)
+
+
+def chemin(graphe, u, v):
+    """Un chemin de u à v, le cas échéant, None sinon"""
     vus = {}
-    parcours_chemin(g, vus, None, u)
-    # s’il n’existe pas de chemin
-    if
+    parcours_chemin(graphe, vus, None, u)
+    # S’il n’existe pas de chemin
+    if v not in vus:
         return None
-    # sinon on construit le chemin
+    # Sinon on construit le chemin
     ch = []
     s = v
-    while
+    while s != u:
         ch.append(s)
-    s =
+        s = vus[s]
     ch.reverse()
     return ch
+
+
+# Exercice 14
+
+def parcours_cycle(graphe, couleur, s):
+    """Parcours en profondeur depuis le sommet"""
+    if couleur[s] == 'gris':
+        return True
+    if couleur[s] == 'noir':
+        return False
+    couleur[s] = 'gris'
+    for v in graphe.voisins(s):
+        if parcours_cycle(graphe, couleur, v):
+            return True
+    couleur[s] = 'noir'
+    return False
+
+
+def existe_cycle(graphe):
+    """Détermine la présence d’un cycle dans le graphe"""
+    couleur = {}
+    for s in graphe.sommets():
+        couleur[s] = 'blanc'
+    for s in graphe.sommets():
+        if parcours_cycle(graphe, couleur, s):
+            return True
+    return False
+
+
+# Exercice 16
+
+class Noeud:
+    """Un nœud d’un arbre binaire"""
+
+    def __init__(self, v, g, d):
+        self.valeur = v
+        self.gauche = g
+        self.droit = d
+        self.suivante = None
+
+
+class File:
+    """Structure de file"""
+
+    def __init__(self):
+        self.tete = None
+        self.queue = None
+
+    def est_vide(self):
+        return self.tete is None
+
+    def ajouter(self, c):
+        if self.est_vide():
+            self.tete = c
+        else:
+            self.queue.suivante = c
+        self.queue = c
+
+    def retirer(self):
+        if self.est_vide():
+            raise IndexError('retirer sur une file vide')
+        else:
+            v = self.tete
+            self.tete = self.tete.suivante
+            if self.tete is None:
+                self.queue = None
+            return v
+
+    def consulter(self):
+        if self.est_vide():
+            raise IndexError
+        else:
+            return self.tete
+
+
+def parcours_largeur(arbre):
+    vus = []
+    file = File()
+    file.ajouter(arbre)
+    while not file.est_vide():
+        u = file.retirer()
+        if u is not None:
+            vus.append(u.valeur)
+            if u.gauche:
+                file.ajouter(u.gauche)
+            if u.droit:
+                file.ajouter(u.droit)
+    return vus
+
+
+# Exercice 16
+
+def parcours_largeur_ch(arbre, s):
+    vus = {}
+    vus[s] = None
+    file = File()
+    file.ajouter(arbre)
+    while not file.est_vide():
+        u = file.consulter()
+        for v in arbre.voisins(u):
+            if v not in vus:
+                vus[arbre] = u
+                file.ajouter(v)
+        file.retirer()
+    return vus
+
+
+def chemin2(graphe, u, v):
+    """Un chemin de u à v, le cas échéant, None sinon"""
+    vus = parcours_largeur_ch(graphe, u)
+    if v not in vus:
+        return None
+
+    ch = []
+    s = v
+    while s != u:
+        ch.append(s)
+        s = vus[s]
+    ch.reverse()
+    return ch
+
+
+# Exercice 18
+
+def parcours_distance(graphe, sommet):
+    """Dictionnaire des distances entre le sommet et les autres sommets
+    accessibles"""
+    dist = {sommet: 0}
+    file = File()
+    file.ajouter(sommet)
+    while not file.est_vide():
+        u = file.consulter()
+        for v in graphe.voisins(u):
+            if v not in dist:
+                dist[v] = dist[u] + 1
+                file.ajouter(v)
+        file.retirer()
+    return dist
+
+
+def distance(graphe, u, v):
+    """Distance de u à v et None si pas de chemin"""
+    dist = parcours_distance(graphe, u)
+    if v not in dist:
+        return None
+    else:
+        return dist[v]
