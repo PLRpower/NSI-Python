@@ -1,3 +1,6 @@
+import time
+
+
 def multiple(num):
     """ Obtenir le multiple de 26 dans lequel le nombre num est contenu """
     return 26 * ((num - 65) // 26)
@@ -25,12 +28,52 @@ def trouve_cesar(msg):
         elif char.isalpha():
             freq[char.upper()] += 1
 
-    # Trouve la lettre la plus fréquente dans le message
     lettre_max = max(freq, key=freq.get)
     decalage = ord(lettre_max) - ord('E')
-
-    # Déchiffre le message en utilisant le décalage trouvé
     return chiffre_cesar(msg, -decalage)
 
 
-print(trouve_cesar('QNAF Y NEVGUZRGVDHR QR Y NZBHE HA CYHF HA RTNYR GBHG RG QRHK ZBVAF HA RTNYR EVRA'))
+def chiffre_xor(msg, cle):
+    msgc = []
+    long_cle = len(cle)
+
+    for i, x in enumerate(msg):
+        indice = i % long_cle
+        msgc.append(x ^ cle[indice])
+
+    return bytes(msgc)
+
+
+message = "L'informatique c'est super!".encode()
+clé = "NSI".encode()
+msgc = chiffre_xor(message, clé)
+
+
+def decrypte_xor(msgc):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    temps_depart = time.time()
+    for x in alphabet:
+        for y in alphabet:
+            for z in alphabet:
+                try:
+                    cle = x + y + z
+                    msg = chiffre_xor(msgc, cle.encode()).decode()
+                    if msg[-4:] == "nse!":
+                        print("Message décrypté avec la clé " + str(cle) + " : " + msg)
+                except UnicodeDecodeError:
+                    continue
+    temps_total = round(time.time() - temps_depart, 2)
+    print("Temps total ≈ " + str(temps_total) + "s")
+
+
+def factorisation(n):
+    temps_depart = time.time()
+    for i in range(2, n):
+        if n % i == 0:
+            return i, n // i, time.time() - temps_depart
+    return 1, n, time.time() - temps_depart
+
+
+print(factorisation(906555947934709))
+print(factorisation(17063866208590147))
