@@ -75,5 +75,14 @@ def factorisation(n):
     return 1, n, time.time() - temps_depart
 
 
-print(factorisation(906555947934709))
-print(factorisation(17063866208590147))
+def log_discret(gu, g, p):
+    temps_depart = time.time()
+    u = 1
+    while not pow(g, u, p) == gu:
+        u += 1
+    temps_total = round(time.time() - temps_depart, 2)
+    print('Résultat : ' + str(u) + ' Temps total ≈ ' + str(temps_total) + 's')
+
+
+log_discret(273213231, 7, 934741963)
+log_discret(360223736, 7, 934741963)
