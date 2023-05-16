@@ -22,13 +22,6 @@ def trouve_2(p, t):
                 return trouve_2(p, [*elts])
 
 
-def applique(f, t):
-    match t:
-        case []:
-            return None
-        case [x, *elts]:
-            return [f(x)], applique(f, t[*elts])
-
 
 def tri_insertion(t, inf):
     for i in range(1, len(t)):
@@ -73,3 +66,27 @@ def tri_insertion_3(t, inf):
         return []
     else:
         return insere_3(tete(t), tri_insertion_3(queue(t), inf))
+
+
+def double(f):
+    return lambda x: f(f(x))
+
+
+def compose(f, g):
+    return lambda x: f(g(x))
+
+
+def triple(t):
+    return list(map(lambda x: 3 * x, t))
+
+
+def maj_min(t):
+    return list(map(lambda x: (x.upper(), x.lower()), t))
+
+
+def plus_petit_plus_grand(t, n):
+    return list(filter(lambda x: x < n, t)), list(filter(lambda x: x >= n, t))
+
+
+def partition(p, t):
+    return list(filter(lambda x: p(x), t))
