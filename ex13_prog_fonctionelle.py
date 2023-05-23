@@ -1,3 +1,6 @@
+from functools import reduce
+
+
 def f(x):
     return x * 2
 
@@ -90,3 +93,57 @@ def plus_petit_plus_grand(t, n):
 
 def partition(p, t):
     return list(filter(lambda x: p(x), t))
+
+
+def longs_mots(t, n):
+    return list(filter(lambda m: len(m) >= n, t))
+
+
+def fact(n):
+    return reduce(lambda a, b: a * b, range(1, n + 1))
+
+
+def maximum(t):
+    return reduce(lambda a, b: a if a > b else b, t)
+
+
+def minimum(t):
+    return reduce(lambda a, b: a if a < b else b, t)
+
+
+def min_max(t):
+    return minimum(t), maximum(t)
+
+
+def somme_sup(t, n):
+    return reduce(lambda x, y: x + y if y > n else x, t, 0)
+
+
+def longueur(t):
+    return reduce(lambda a, b: a + 1, t, 0)
+
+
+def all_true(t):
+    return reduce(lambda a, b: a and b, t, True)
+
+
+def check_all(p, t):
+    return reduce(lambda a, b: a and p(b), t, True)
+
+
+def any_true(t):
+    return reduce(lambda a, b: a or b, t, False)
+
+
+def check_any(p, t):
+    return reduce(lambda a, b: a or p(b), t, False)
+
+
+def occurence(mot):
+    def occu(c, mot):
+        return reduce(lambda a, l: a + 1 if l == c else a, mot, 0)
+
+    return dict(list(map(lambda c: (c, occu(c, mot)), mot)))
+
+
+assert occurence("banane") == {'a': 2, 'b': 1, 'e': 1, 'n': 2}
