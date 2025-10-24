@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <section class="px-4">
+        <h1 class="text-4xl text-center">Ajouter un livre</h1>
+        <form method="post" action="/add/" class="">
+            {% csrf_token %}
+            <div class="mb-6 flex flex-col">
+                <label for="title">Nom du livre</label>
+                <input type="text" name="title" id="title" class="bg-gray-200 rounded p-2"/>
+            </div>
+
+            <div class="mb-6 flex flex-col">
+                <label for="author">Auteur</label>
+                <input type="text" name="author" id="author" class="bg-gray-200 rounded p-2"/>
+            </div>
+
+            <div class="mb-6 flex flex-col">
+                <label for="pub_date">Date de publiation</label>
+                <input type="date" name="pub_date" id="pub_date" class="bg-gray-200 rounded p-2">
+            </div>
+
+
+            <button type="submit" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                Ajouter
+            </button>
+        </form>
+    </section>
+
+{% endblock %}

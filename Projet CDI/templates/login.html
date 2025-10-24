@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <section class="bg-gray-50">
+        <div class="wrapper">
+            <div class="white-card">
+                <div class="p-6 space-y-4">
+                    <h1 class="h1-title">
+                        Se connecter
+                    </h1>
+                    <form class="space-y-4" action="#">
+                        <div>
+                            <label for="identifiant" class="label-input">Votre numéro d'étudiant</label>
+                            <input type="email" name="identifiant" id="identifiant" class="text-input" placeholder="745611421242" required>
+                        </div>
+                        <div>
+                            <label for="password" class="label-input">Votre mot de passe</label>
+                            <input type="password" name="password" id="password" placeholder="••••••••" class="text-input" required>
+                        </div>
+                        <div class="flex justify-between">
+                            <div class="flex">
+                                <div class="flex items-center h-5">
+                                    <input id="remember" aria-describedby="remember" type="checkbox" class="checkbox-input" required>
+                                </div>
+                                <label for="remember" class="text-cyan-500 ml-3 text-sm">Se souvenir ?</label>
+                            </div>
+                            <a href="#" class="link-text">Mot de passe oublié ?</a>
+                        </div>
+                        <button type="submit" class="button">Se connecter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
